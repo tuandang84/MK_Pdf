@@ -86,7 +86,7 @@ proptest = "1"
 
 # ui
 egui = "0.37"
-egui_extras = { version = "0.37", default-features = false, features = ["svg"] }
+egui_extras = { version = "0.37", default-features = false, features = ["svg", "svg_images"] }
 eframe = { version = "0.37", default-features = false }
 egui_kittest = "0.37"
 rfd = "0.17"
