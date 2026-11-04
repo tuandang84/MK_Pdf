@@ -14,7 +14,7 @@ pub enum Availability {
     Ready,
     /// Planned; ships in the named milestone.
     Planned(&'static str),
-    /// Cloud-only in Acrobat; PdfCraft offers an optional pluggable provider instead.
+    /// Cloud-only in Acrobat; MK PDF offers an optional pluggable provider instead.
     Provider,
 }
 
@@ -283,6 +283,7 @@ pub static TOOL_GROUPS: &[ToolGroup] = &[
                 title: "Protect",
                 items: &[
                     item("Protect with password", "lock", "protect.password", Ready),
+                    item("Unlock PDF", "lock-open", "protect.unlock_document", Ready),
                     item("Remove hidden information", "eye-off", "protect.remove_hidden", Ready),
                 ],
             },

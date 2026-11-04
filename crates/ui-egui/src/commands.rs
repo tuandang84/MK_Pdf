@@ -144,6 +144,7 @@ impl PdfCraftApp {
                 }
             }
             commands::Needs::Unlock if self.active.is_some() => tl!("This document has no restrictions to lift").to_string(),
+            commands::Needs::UnlockPdf if self.active.is_some() => tl!("This document isn't password-protected").to_string(),
             commands::Needs::Assembly | commands::Needs::Modification | commands::Needs::Annotate if self.active.is_some() => {
                 tl!("The document's security settings don't allow this change").to_string()
             }
@@ -205,6 +206,9 @@ impl PdfCraftApp {
                 self.request_unlock(Some(then));
             }
             "protect.unlock" => self.request_unlock(None),
+            // Removing the security outright, whatever the document restricts, without its
+            // permissions password: the web "Unlock PDF" tools' behaviour.
+            "protect.unlock_document" => self.dialog = Some(Dialog::UnlockPdf),
             "protect.password" => {
                 self.protect_draft = Default::default();
                 self.dialog = Some(Dialog::Protect);

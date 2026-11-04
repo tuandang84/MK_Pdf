@@ -1,5 +1,5 @@
-//! Community links: the Discord button is one click away everywhere; Help menu, About dialog and
-//! home screen open the ArtCraft and PdfCraft pages.
+//! Project links: the repository and its issue tracker are one click away from the title bar, the
+//! Help menu, the About dialog and the home screen.
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
@@ -17,26 +17,31 @@ fn harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, P
     h
 }
 
+/// The link on the page or in a dialog, not the title bar's copy of the same label.
+fn page_link<'a>(h: &'a Harness<'static, PdfCraftApp>, label: &'a str) -> egui_kittest::Node<'a> {
+    h.query_all_by_label(label).find(|n| n.rect().top() > 100.0).unwrap_or_else(|| panic!("{label:?} is not on the page"))
+}
+
+/// The title bar's copy of a label, not the home screen's link of the same name.
+fn top_bar_link<'a>(h: &'a Harness<'static, PdfCraftApp>, label: &'a str) -> egui_kittest::Node<'a> {
+    h.query_all_by_label(label).find(|n| n.rect().top() <= 100.0).unwrap_or_else(|| panic!("{label:?} is not in the title bar"))
+}
+
 #[test]
-fn discord_button_in_the_top_bar_opens_discord() {
+fn report_an_issue_in_the_top_bar_opens_the_issue_tracker() {
     let mut h = harness(|_| {});
-    h.get_by_label("Discord").click();
+    top_bar_link(&h, "Report an issue").click();
     h.run_steps(2);
-    assert_eq!(h.state().last_opened_url.as_deref(), Some(links::DISCORD));
-    assert_eq!(links::DISCORD, "https://discord.gg/artcraft");
+    assert_eq!(h.state().last_opened_url.as_deref(), Some(links::ISSUES));
+    assert_eq!(links::ISSUES, "https://github.com/tuandang84/MK_Pdf/issues");
 }
 
 #[test]
 fn home_screen_links() {
-    for (label, url) in [
-        ("Join our Discord", links::DISCORD),
-        ("PdfCraft web page", "https://getartcraft.com/apps/pdfcraft"),
-        ("PdfCraft on GitHub", "https://github.com/storytold/pdfcraft"),
-        ("ArtCraft website", "https://getartcraft.com"),
-    ] {
+    for (label, url) in [("Report an issue", links::ISSUES), ("MK PDF on GitHub", links::GITHUB)] {
         let mut h = harness(|_| {});
-        h.get_by_label("Join the ArtCraft community");
-        h.get_by_label(label).click();
+        h.get_by_label("Minh Kim Tech");
+        page_link(&h, label).click();
         h.run_steps(2);
         assert_eq!(h.state().last_opened_url.as_deref(), Some(url), "{label}");
     }
@@ -45,12 +50,12 @@ fn home_screen_links() {
 #[test]
 fn home_community_card_closes_for_this_run() {
     let mut h = harness(|_| {});
-    h.get_by_label("Join the ArtCraft community");
+    h.get_by_label("Minh Kim Tech");
     h.get_by_label("Close").click();
     h.run_steps(2);
     assert!(h.state().community_card_closed);
-    assert!(h.query_by_label("Join the ArtCraft community").is_none());
-    assert!(h.query_by_label("Join our Discord").is_none());
+    assert!(h.query_by_label("Minh Kim Tech").is_none());
+    assert!(h.query_all_by_label("MK PDF on GitHub").next().is_none());
     // Not remembered: a fresh app shows the card again.
     assert!(!PdfCraftApp::new().community_card_closed);
 }
@@ -63,10 +68,10 @@ fn about_dialog_shows_the_brand_and_links() {
         app.open_bytes("one.pdf", None, pdf.to_vec()).unwrap();
         app.dialog = Some(Dialog::About);
     });
-    assert!(h.query_all_by_label("ArtCraft").count() >= 2, "the mark and the wordmark (alt text)");
-    h.get_by_label("Join our Discord").click();
+    assert!(h.query_all_by_label("Minh Kim Tech PDF").count() >= 1, "the mark's alt text");
+    page_link(&h, "Report an issue").click();
     h.run_steps(2);
-    assert_eq!(h.state().last_opened_url.as_deref(), Some(links::DISCORD));
+    assert_eq!(h.state().last_opened_url.as_deref(), Some(links::ISSUES));
 }
 
 #[test]

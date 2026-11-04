@@ -47,7 +47,7 @@ pub struct Document {
     /// What field scripts printed or asked for (see [`Session::take_js_output`]).
     pub(crate) js_output: js::JsOutput,
     /// Dynamic XFA forms: what laying the template out produced (pages and fields are
-    /// PdfCraft's; Adobe's viewers draw the form from the XFA packets themselves).
+    /// MK PDF's; Adobe's viewers draw the form from the XFA packets themselves).
     pub xfa: Option<XfaLayout>,
     /// The parsed template of a laid-out XFA form, for its scripts.
     pub(crate) xfa_template: Option<Arc<pdfcraft_xfa::model::Template>>,
@@ -109,7 +109,7 @@ pub(crate) fn page_runs(pages: &[usize]) -> String {
 
 /// Text an edit stored as typed but drew with `?` in place of `ch`, because the font it is drawn
 /// with (a form field's, or the standard fonts for comments) can't draw that character. Acrobat
-/// keeps such text too, drawing it with fonts PdfCraft can't embed yet.
+/// keeps such text too, drawing it with fonts MK PDF can't embed yet.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TextNotice {
     /// The form field's full name, or `None` for a comment.
@@ -129,7 +129,7 @@ impl std::fmt::Display for TextNotice {
         match (&self.field, self.redrawn_elsewhere) {
             (Some(name), true) => write!(
                 f,
-                "form field {name:?} (page {page}) holds {ch}, which its font can't draw: the value is saved, PdfCraft shows ? in its place, and other PDF viewers redraw the field from the value"
+                "form field {name:?} (page {page}) holds {ch}, which its font can't draw: the value is saved, MK PDF shows ? in its place, and other PDF viewers redraw the field from the value"
             ),
             (Some(name), false) => write!(
                 f,
@@ -406,9 +406,12 @@ impl Document {
         self.editor.is_some()
     }
 
-    /// What the opening password allows; `None` when the document is not encrypted.
+    /// What the opening password allows; `None` when the document is not encrypted. Once the
+    /// security has been changed in this session (Protect, Remove security, Unlock PDF) this is
+    /// what the next save writes, so the document is usable straight away.
     pub fn permissions(&self) -> Option<pdfcraft_cos::Permissions> {
-        self.editor.as_ref().and_then(|e| e.cos.permissions())
+        let cos = &self.editor.as_ref()?.cos;
+        if cos.encryption_changed() { cos.output_handler().map(|h| h.permissions()) } else { cos.permissions() }
     }
 
     /// Printing is allowed (Table 22, bit 3).

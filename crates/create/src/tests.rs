@@ -137,7 +137,7 @@ fn text_keeps_leading_spaces_and_tabs() {
 }
 
 /// Text Helvetica can't draw is refused with its line and character, never set as `?`; text
-/// PdfCraft generates writes such characters as [U+XXXX] and says so.
+/// MK PDF generates writes such characters as [U+XXXX] and says so.
 #[test]
 fn text_helvetica_cannot_draw_is_refused_or_escaped() {
     let err = from_text("notes", "Café —\tok\r\n\u{c}第二页 notes", LETTER, 11.0).unwrap_err();
@@ -2055,7 +2055,7 @@ fn symbol_coded_jbig2_images_export_as_their_picture() {
 /// Export ▸ Images reads JBIG2 images (ISO 32000-2 §7.4.7), JBIG2 black as 0: as the image, and as
 /// a stencil `/Mask` of another. Their `/JBIG2Globals` are read, from a dictionary or the one in
 /// an array, so globals that can't be read skip the image rather than being ignored. A JBIG2 page
-/// of another size than the image (a taller one too: PdfCraft's renderer draws the whole page into
+/// of another size than the image (a taller one too: MK PDF's renderer draws the whole page into
 /// the image), refused before it is decoded however large, or data that isn't JBIG2, skips the
 /// image.
 #[test]

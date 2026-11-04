@@ -541,7 +541,7 @@ pub enum Edit {
     /// Sanitize Document: every category, then a full rewrite on save.
     Sanitize,
     /// An XFA form made an ordinary (static) PDF form: the XFA packets, `/NeedsRendering` and
-    /// PdfCraft's private keys go, the pages as laid out and the fields with their values
+    /// MK PDF's private keys go, the pages as laid out and the fields with their values
     /// stay, so every viewer shows the same form and none lays it out again. Its scripts no
     /// longer run.
     XfaToStatic,
@@ -557,6 +557,11 @@ pub enum Edit {
     Protect(Protection),
     /// Remove password security (needs the owner password).
     RemoveProtection,
+    /// Unlock PDF: remove the security of a document this session can read, whatever it
+    /// restricts, without asking for the permissions password (the "Unlock PDF" tool web
+    /// services offer). Acrobat refuses this without that password; [`Edit::RemoveProtection`]
+    /// is the Acrobat-parity route. Written by the next save, which is a full rewrite.
+    Unlock,
     /// Several edits applied as one undoable step (all or nothing).
     Batch {
         label: String,

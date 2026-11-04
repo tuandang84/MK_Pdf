@@ -393,7 +393,7 @@ fn used_elsewhere(doc: &Document, images: &HashSet<u32>, read: &Read) -> HashSet
     images.iter().copied().filter(|i| !covered.contains(i)).collect()
 }
 
-/// Colour components of a colour space PdfCraft resamples: gray (1) or RGB (3).
+/// Colour components of a colour space MK PDF resamples: gray (1) or RGB (3).
 pub(crate) fn components(doc: &Document, cs: &Object) -> Option<usize> {
     let cs = doc.resolve(cs);
     match &*cs {
@@ -512,7 +512,7 @@ fn allowance(bytes: usize, rows: u32) -> Option<usize> {
 /// /ColorTransform; without a marker /ColorTransform does, 1 (YCbCr) by default.
 ///
 /// `None`, so the image is left as it is, when readers may disagree: the marker and
-/// /ColorTransform contradict each other (PdfCraft's renderer lets /ColorTransform 0 win where
+/// /ColorTransform contradict each other (MK PDF's renderer lets /ColorTransform 0 win where
 /// the standard lets the marker win), either holds a value other than 0 or 1, or the parameters
 /// or the JPEG's segments can't be read.
 fn ycc_encoded(doc: &Document, s: &Stream) -> Option<bool> {

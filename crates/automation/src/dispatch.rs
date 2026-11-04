@@ -696,6 +696,11 @@ impl Automation {
                 out["security"] = security(self.doc(&a)?);
                 out
             }
+            "doc_unlock" => {
+                let mut out = self.apply(&a, Edit::Unlock)?;
+                out["security"] = security(self.doc(&a)?);
+                out
+            }
             "form_fields" => self.form_fields(&a)?,
             "form_fill" => self.form_fill(&a)?,
             "form_set_image" => {

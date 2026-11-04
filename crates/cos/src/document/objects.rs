@@ -280,7 +280,7 @@ impl Document {
     /// [`pdfcraft_filters::decode_jbig2`] with its `/JBIG2Globals`, as `CCITTFaxDecode` and
     /// `JBIG2Decode` give them (ISO 32000-2 §7.4.6, §7.4.7). Parameters given by reference count,
     /// for every filter ([`Document::with_direct_parms`]). A fax image's `/Columns` has to be its
-    /// `/Width`, and a JBIG2 image's page its `/Width` × `/Height`: PdfCraft's renderer draws the
+    /// `/Width`, and a JBIG2 image's page its `/Width` × `/Height`: MK PDF's renderer draws the
     /// whole page into the image. Up to its `/Height` rows are decoded, whatever a fax image's `/Rows` says,
     /// within [`MAX_DECODED`] bytes; damaged fax data gives fewer, so a caller checks it has the
     /// rows it needs. Damaged JBIG2 data, and globals that can't be read (within

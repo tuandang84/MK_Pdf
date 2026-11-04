@@ -1733,6 +1733,34 @@ fn the_permissions_password_unlocks_an_open_document() {
     assert!(pdfcraft_cos::Document::open(plain).unwrap().security().is_none(), "security removed");
 }
 
+/// "Unlock PDF": a document opened with its user password loses every restriction without
+/// anyone typing the permissions password (the behaviour of the web unlock tools).
+#[test]
+fn unlock_pdf_takes_the_security_off_without_the_permissions_password() {
+    let mut s = Session::new();
+    let id = s.open("r.pdf", None, protected("open", "perms", 0b0100), Some("open")).unwrap();
+    let d = s.get(id).unwrap();
+    assert!(!d.allows_modification() && !d.allows_copying() && d.can_unlock());
+    assert!(matches!(s.apply(id, Edit::RemoveProtection), Err(EditError::NotPermitted(_))));
+    s.apply(id, Edit::Unlock).unwrap();
+    let d = s.get(id).unwrap();
+    assert!(d.dirty, "the unlocked file waits for a save");
+    assert!(d.editable() && d.permissions().is_none(), "no restrictions are left");
+    assert!(d.allows_modification() && d.allows_copying() && d.allows_printing(), "everything is allowed");
+    assert!(!d.can_unlock() && d.allows_security_change(), "nothing is left to unlock");
+    assert!(d.security_summary().is_none(), "and no security is reported");
+    // It is an ordinary undo step: undo brings the restrictions back.
+    s.undo(id).unwrap();
+    assert!(s.get(id).unwrap().can_unlock(), "after undo");
+    s.redo(id).unwrap();
+    // Saving writes a file without encryption, and nothing asks for a password afterwards.
+    let plain = s.save_bytes(id).unwrap();
+    assert!(pdfcraft_cos::Document::open(plain).unwrap().security().is_none(), "security removed");
+    // A document without security has nothing to unlock.
+    let plain_id = s.open("p.pdf", None, Arc::new(fixture(1)), None).unwrap();
+    assert!(matches!(s.apply(plain_id, Edit::Unlock), Err(EditError::Protection(m)) if m.contains("isn't protected")));
+}
+
 #[test]
 fn remove_security_from_a_file_with_its_encrypt_dictionary_in_the_trailer() {
     // MuPDF writes /Encrypt inline in the trailer rather than as an object (#2661).
@@ -5337,7 +5365,7 @@ fn scripts_in_an_xfa_form_see_the_xfa_plugin_installed() {
     assert_eq!((o.error, o.result.as_deref()), (None, Some("undefined number 3.5")));
 }
 
-/// #3940: a document-level script that defines the helper and then calls a method PdfCraft lacks
+/// #3940: a document-level script that defines the helper and then calls a method MK PDF lacks
 /// (an Acrobat form copying a button icon at open) left every calculated field blank. The
 /// helper stays defined, the form calculates, and the error is reported once.
 #[test]

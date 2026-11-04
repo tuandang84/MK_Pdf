@@ -46,6 +46,9 @@ pub enum Needs {
     ProtectedSecurity,
     /// The document's restrictions can be lifted with its permissions password.
     Unlock,
+    /// The document is protected and "Unlock PDF" can take its security off without the
+    /// permissions password (it is open, so we could read it).
+    UnlockPdf,
     /// There is something to undo.
     Undo,
     /// There is something to redo.
@@ -376,6 +379,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     c("edit.background.remove", "Remove background", None, None, Marks(crate::MarkKind::Background), "palette"),
     c("protect.password", "Protect using password…", FILE, None, Security, "lock"),
     c("protect.remove", "Remove security", FILE, None, ProtectedSecurity, "lock-open"),
+    c("protect.unlock_document", "Unlock PDF", FILE, None, UnlockPdf, "lock-open"),
     c("protect.unlock", "Enter permissions password…", None, None, Unlock, "lock-open"),
     c("protect.properties", "Security properties…", FILE, None, Document, "shield-check"),
     c("page.organize", "Organize pages", PAGES, None, Document, "layout-grid"),
@@ -399,12 +403,10 @@ pub const COMMANDS: &[CommandSpec] = &[
     c("page.number", "Number pages…", PAGES, None, Assembly, "hash"),
     c("page.properties", "Page properties…", PAGES, None, Modification, "info"),
     c("help.shortcuts", "Keyboard shortcuts", HELP, None, Nothing, "circle-help"),
-    c("help.discord", "Join the ArtCraft Discord", HELP, None, Nothing, "messages-square"),
-    c("help.app_page", "PdfCraft web page", HELP, None, Nothing, "globe"),
-    c("help.github", "PdfCraft on GitHub", HELP, None, Nothing, "code-xml"),
-    c("help.website", "ArtCraft website", HELP, None, Nothing, "external-link"),
+    c("help.issues", "Report an issue", HELP, None, Nothing, "triangle-alert"),
+    c("help.github", "MK PDF on GitHub", HELP, None, Nothing, "code-xml"),
     c("help.check_updates", "Check for updates…", HELP, None, Nothing, "cloud"),
-    c("help.about", "About PdfCraft", HELP, None, Nothing, "info"),
+    c("help.about", "About MK PDF", HELP, None, Nothing, "info"),
 ];
 
 pub fn command(id: &str) -> Option<&'static CommandSpec> {
@@ -435,6 +437,7 @@ pub fn is_enabled(spec: &CommandSpec, session: &Session, active: Option<DocId>) 
         Security => doc.is_some_and(|d| d.allows_security_change() || d.can_unlock()),
         ProtectedSecurity => doc.is_some_and(|d| (d.allows_security_change() || d.can_unlock()) && d.security_summary().is_some()),
         Unlock => doc.is_some_and(|d| d.can_unlock()),
+        UnlockPdf => doc.is_some_and(|d| d.editable() && d.security_summary().is_some()),
         Undo => doc.is_some_and(|d| d.can_undo().is_some()),
         Redo => doc.is_some_and(|d| d.can_redo().is_some()),
     }

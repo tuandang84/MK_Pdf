@@ -301,7 +301,7 @@ pub(crate) fn info(d: &Document) -> Value {
         // destination, null without one.
         "open_destination": i.open_dest.as_ref().map(|(p, view)| json!({ "page": page1(*p), "destination": i.pages.get(*p).and_then(|pg| destination(view, pg)) })),
         // XFA forms: "static" (the PDF's own fields work; the XFA data is ignored) or "dynamic"
-        // (laid out from the template by PdfCraft, see xfa_layout; placeholder pages when that failed).
+        // (laid out from the template by MK PDF, see xfa_layout; placeholder pages when that failed).
         "xfa": i.xfa.map(|x| match x { pdfcraft_render::Xfa::Static => "static", pdfcraft_render::Xfa::Dynamic => "dynamic" }),
         "xfa_layout": d.xfa.as_ref().map(|x| json!({ "pages": x.pages, "fields": x.fields, "warnings": x.warnings })),
         // A script of the form ran too long and was abandoned: its scripts no longer run in this

@@ -56,7 +56,7 @@ pub struct PageImage {
 }
 
 impl PageImage {
-    /// Whether an active clip was written by PdfCraft's image crop tool.
+    /// Whether an active clip was written by MK PDF's image crop tool.
     pub fn has_editor_crop(&self) -> bool {
         self.clips.iter().any(|clip| clip.app_crop)
     }
@@ -1601,18 +1601,18 @@ fn app_crop_ranges(ops: &[Op], start: usize, target: usize) -> Vec<std::ops::Ran
     ranges
 }
 
-/// Remove only crops written by PdfCraft, preserving the document author's clipping paths.
+/// Remove only crops written by MK PDF, preserving the document author's clipping paths.
 fn remove_image_crop(doc: &mut Document, p: &pdfcraft_model::Page, all: &[(Object, Vec<u8>)], img: &PageImage) -> Result<(), EditError> {
     let pieces = joined(all);
     let ops = pieces.parse().ops;
     let target = img.op;
     let scope = image_scopes(&ops, target, "cropped")?;
     let Some((start, _, _)) = scope.transform_scope(target) else {
-        return Err(EditError::Invalid("the image has no PdfCraft crop to remove".into()));
+        return Err(EditError::Invalid("the image has no MK PDF crop to remove".into()));
     };
     let crops = app_crop_ranges(&ops, start, target);
     if crops.is_empty() {
-        return Err(EditError::Invalid("the image has no PdfCraft crop to remove".into()));
+        return Err(EditError::Invalid("the image has no MK PDF crop to remove".into()));
     }
     let changed = crate::text::splice(&pieces, &ops, |index| (Vec::new(), !crops.iter().any(|r| r.contains(&index))));
     let contents = crate::text::rewritten_contents(doc, all, changed);

@@ -175,7 +175,7 @@ impl Edit {
             Edit::SetPageBox { pages, which: PageBox::Crop, .. } => plural("Crop page", "Crop pages", pages.len()),
             Edit::SetPageBox { .. } => Label::of("Set page boxes"),
             Edit::SetTransition { .. } => Label::of("Set page transitions"),
-            // The four `/Info` keys PdfCraft itself offers get a wording of their own, so each can
+            // The four `/Info` keys MK PDF itself offers get a wording of their own, so each can
             // be said in another language; any other key is the document's and goes in as it stands.
             Edit::SetInfo { key, .. } => match key.as_str() {
                 "Title" => Label::of("Change Title"),
@@ -307,6 +307,7 @@ impl Edit {
             Edit::FlattenFillSign => Label::of("Flatten Fill & Sign"),
             Edit::Protect(_) => Label::of("Protect with password"),
             Edit::RemoveProtection => Label::of("Remove security"),
+            Edit::Unlock => Label::of("Unlock PDF"),
             // A batch carries its own name, already worded by whoever built it.
             // A batch carries its name as text, so the wording is only the hole (see `BATCH_LABELS`).
             Edit::Batch { label, .. } => Label::with("{batch}", label.as_str()),

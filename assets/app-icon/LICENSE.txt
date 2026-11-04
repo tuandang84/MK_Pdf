@@ -1,10 +1,10 @@
-PdfCraft app icon (pdfcraft.svg, pdfcraft-small.svg and every file derived from them in this
+MK PDF app icon (pdfcraft.svg, pdfcraft-small.svg and every file derived from them in this
 directory: pdfcraft-1024.png, pdfcraft.icns, pdfcraft.ico, hicolor/).
 
 Original artwork made for this project by Minh Kim Tech: the MK monogram, the disc and the
 MINH KIM TECH line are their own drawing (source: assets/brand/mk-pdf-logo.png), and the word
 PDF is set in Inter (SIL Open Font License 1.1, assets/fonts/Inter-SemiBold.ttf). No third-party
-material otherwise. Licensed like the rest of PdfCraft, under either of
+material otherwise. Licensed like the rest of MK PDF, under either of
 
   * Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
   * MIT license (https://opensource.org/licenses/MIT)

@@ -584,7 +584,7 @@ fn an_image_whose_predictor_is_given_by_reference_has_the_covered_pixel_cleared(
 }
 
 /// A CCITT fax image (a scan the optimizer or Create PDF stored as Group 4) has its covered
-/// pixels cleared in a copy, like any image PdfCraft can decode, instead of being removed whole:
+/// pixels cleared in a copy, like any image MK PDF can decode, instead of being removed whole:
 /// whether it sits behind another filter, with its parameters given by reference, or is a mask,
 /// its decode array inverting it given directly, by reference or with its first number so.
 #[test]

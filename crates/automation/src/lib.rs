@@ -1,4 +1,4 @@
-//! pdfcraft-automation — agent control for PdfCraft (architecture §13).
+//! pdfcraft-automation — agent control for MK PDF (architecture §13).
 //!
 //! - **Layer:** L7. Headless: depends on the engine, never on a UI toolkit.
 //! - [`Automation`] is a tool set over an engine [`Session`]: open, inspect, render, extract and
@@ -72,7 +72,7 @@ pub(crate) use paths::{read_input, read_input_bytes};
 #[cfg(test)]
 use paths::{write_atomic_synced, write_atomic_with};
 
-/// A headless PdfCraft session driven by tool calls.
+/// A headless MK PDF session driven by tool calls.
 pub struct Automation {
     session: Session,
     root: Option<PathBuf>,

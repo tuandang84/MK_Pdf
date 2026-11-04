@@ -309,8 +309,8 @@ fn vendor_provenance_egui_wgpu_surface_fit_identity() {
 fn a_gpu_error_while_a_window_is_set_up_is_returned_not_a_panic() {
     // Issue #519: on a 2015 Intel GPU, wgpu's GL backend couldn't configure the window's
     // surface (`GpuWaitTimeout`), and wgpu's default error handler panicked before the app was
-    // created, so PdfCraft never got to retry with OpenGL. vendor/egui-wgpu configures a new
-    // window's surface inside `catch_errors`. A real device on PdfCraft's own GPU settings,
+    // created, so MK PDF never got to retry with OpenGL. vendor/egui-wgpu configures a new
+    // window's surface inside `catch_errors`. A real device on MK PDF's own GPU settings,
     // and an error wgpu raises before anything reaches the driver: a texture one pixel wider
     // than the device allows.
     use eframe::wgpu;
@@ -422,6 +422,7 @@ fn winit_carries_the_windows_11_monitor_scale_fix() {
     // The audited W1 hunk itself, not merely the file's presence: Windows 11 applies the
     // rect Windows suggests, while Windows 10 keeps the old adjustment.
     for marker in [
+        // The vendored copy is upstream code, so its patch markers keep the upstream name.
         "PdfCraft patch: from Windows 11 (build 22000) on, apply the rect Windows suggests",
         "if !WIN10_BUILD_VERSION.is_some_and(|build| build < 22000) {",
         "new_outer_rect = suggested_rect;",

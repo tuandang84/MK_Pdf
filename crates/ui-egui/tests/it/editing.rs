@@ -826,7 +826,7 @@ fn a_save_prompt_opened_in_the_background_asks_for_attention_until_the_user_retu
     h.get_by_label("Cancel").click();
     assert!(attention_over(&mut h, 3).is_empty());
     assert_eq!(h.state().views.len(), 1, "cancel keeps the document open");
-    // With PdfCraft in front, the prompt is in plain sight.
+    // With MK PDF in front, the prompt is in plain sight.
     close_window(&mut h);
     assert!(attention_over(&mut h, 4).is_empty());
     h.get_by_label_contains("Save changes to “doc.pdf”");
@@ -859,7 +859,7 @@ impl Drop for TempPdfs {
     }
 }
 
-/// The app with Preferences ▸ Reopen the files that were open when PdfCraft last closed on.
+/// The app with Preferences ▸ Reopen the files that were open when MK PDF last closed on.
 fn session_harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, PdfCraftApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
         let mut app = PdfCraftApp::new();
@@ -920,7 +920,7 @@ fn quitting_with_unsaved_changes_still_remembers_every_file() {
     h.state_mut().active = Some(1);
     h.state_mut().close_request = Some(CloseRequest::Quit);
     h.run_steps(3);
-    // Each unsaved tab closes as it is answered, before PdfCraft quits.
+    // Each unsaved tab closes as it is answered, before MK PDF quits.
     for _ in 0..2 {
         h.get_by_label("Don't save").click();
         h.run_steps(3);
@@ -3302,7 +3302,7 @@ fn source_font_fixture_with_text(body: &str) -> Vec<u8> {
         "<< /Type /Font /Subtype /Type1 /BaseFont /Times-BoldItalic >>".into(),
         "<< /Type /Page /Parent 2 0 R /Contents 7 0 R /Resources << /Font << /F1 3 0 R /F2 5 0 R >> >> >>".into(),
         "<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Oblique >>".into(),
-        "<< /Producer (PdfCraft) >>".into(),
+        "<< /Producer (MK PDF) >>".into(),
         format!("<< /Length {} >>\nstream\n{body}\nendstream", body.len()),
     ];
     let mut out = b"%PDF-1.7\n".to_vec();
@@ -7598,7 +7598,7 @@ fn win_v_does_not_paste_on_open() {
     assert_eq!(h.state().session.get(id).unwrap().page_images(0).len(), initial_count + 1);
 
     // Simulate pressing Win+V (opening clipboard history flyout):
-    // The OS intercepts V press, so PdfCraft only sees V release without COMMAND (Modifiers::NONE).
+    // The OS intercepts V press, so MK PDF only sees V release without COMMAND (Modifiers::NONE).
     h.event(egui::Event::Key { key: egui::Key::V, physical_key: None, pressed: false, repeat: false, modifiers: egui::Modifiers::NONE });
     h.run_steps(2);
 

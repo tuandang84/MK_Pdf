@@ -38,6 +38,7 @@ struct Pending {
     apply_number: bool,
     link_command: Option<&'static str>,
     protect_now: bool,
+    unlock_now: bool,
     boxes_now: bool,
     marks_now: bool,
     export_now: bool,
@@ -277,6 +278,11 @@ fn dialog_body(ui: &mut egui::Ui, app: &mut PdfCraftApp, dialog: Dialog, req: &m
         }
         Dialog::Revert => {
             if !dialog_revert(ui, app, req) {
+                return false;
+            }
+        }
+        Dialog::UnlockPdf => {
+            if !dialog_unlock_pdf(ui, app, req) {
                 return false;
             }
         }
@@ -685,6 +691,13 @@ fn dialog_properties(ui: &mut egui::Ui, app: &mut PdfCraftApp, req: &mut Pending
                         ui.horizontal(|ui| {
                             if doc.can_unlock() && ui.button(tl!("Unlock…")).clicked() {
                                 req.link_command = Some("protect.unlock");
+                            }
+                            if ui
+                                .button(tl!("Unlock PDF…"))
+                                .on_hover_text(tl!("Remove the password and every restriction without entering its permissions password"))
+                                .clicked()
+                            {
+                                req.link_command = Some("protect.unlock_document");
                             }
                             if ui.button(tl!("Change settings…")).clicked() {
                                 req.link_command = Some("protect.password");
@@ -1246,6 +1259,33 @@ fn dialog_summarize_comments(ui: &mut egui::Ui, app: &mut PdfCraftApp, req: &mut
     false
 }
 
+/// `Dialog::UnlockPdf` content. Returns `false` when it has its own buttons and no footer is wanted.
+fn dialog_unlock_pdf(ui: &mut egui::Ui, app: &mut PdfCraftApp, req: &mut Pending) -> bool {
+    let name = app.active_ids().and_then(|(_, id)| app.session.get(id)).map(|d| d.name.clone()).unwrap_or_default();
+    ui.label(egui::RichText::new(tl!("Unlock PDF")).font(theme::semibold(18.0)));
+    ui.add_space(8.0);
+    ui.label(crate::i18n::fmt(
+        tl!("Remove the password and every restriction from “{name}”? Printing, copying and changing the document will be allowed, and the file will no longer ask for a password when it is opened."),
+        &[("name", &name)],
+    ));
+    ui.add_space(6.0);
+    ui.label(
+        egui::RichText::new(tl!("Only do this for a file you have the right to change. The change is written when you save."))
+            .color(ui.visuals().weak_text_color()),
+    );
+    ui.add_space(12.0);
+    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+        if widgets::pill_button(ui, tl!("Unlock PDF"), true).clicked() {
+            req.unlock_now = true;
+            req.close = true;
+        }
+        if widgets::pill_button(ui, tl!("Cancel"), false).clicked() {
+            req.close = true;
+        }
+    });
+    false
+}
+
 /// `Dialog::Revert` content. Returns `false` when it has its own buttons and no footer is wanted.
 fn dialog_revert(ui: &mut egui::Ui, app: &mut PdfCraftApp, req: &mut Pending) -> bool {
     let name = app.active_ids().and_then(|(_, id)| app.session.get(id)).map(|d| d.name.clone()).unwrap_or_default();
@@ -1443,7 +1483,7 @@ fn dialog_recovery(ui: &mut egui::Ui, app: &mut PdfCraftApp) -> bool {
         ui.label(egui::RichText::new(tl!("Recover unsaved documents?")).font(theme::semibold(18.0)));
     });
     ui.add_space(6.0);
-    ui.label(tl!("PdfCraft didn't shut down normally. These documents had changes that were autosaved:"));
+    ui.label(tl!("MK PDF didn't shut down normally. These documents had changes that were autosaved:"));
     ui.add_space(8.0);
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     egui::Grid::new("recoverable").num_columns(2).spacing([18.0, 6.0]).show(ui, |ui| {
@@ -1543,7 +1583,7 @@ fn dialog_about(ui: &mut egui::Ui, req: &mut Pending) -> bool {
             ui.horizontal(|ui| {
                 widgets::brand_mark(ui, 40.0);
                 ui.vertical(|ui| {
-                    ui.label(egui::RichText::new("PdfCraft").font(theme::semibold(20.0)));
+                    ui.label(egui::RichText::new("MK PDF").font(theme::semibold(20.0)));
                     ui.label(crate::i18n::fmt(tl!("Version {v}"), &[("v", &pdfcraft_engine::build_info::version())]));
                 });
             });
@@ -1740,6 +1780,9 @@ fn finish_requests(app: &mut PdfCraftApp, dialog: Dialog, modal_closed: bool, re
     }
     if req.revert_now {
         app.revert_active();
+    }
+    if req.unlock_now && app.apply_edit(Edit::Unlock) {
+        app.notify_tr("The restrictions are removed. Save the document to write the unlocked file.");
     }
     #[cfg(not(target_arch = "wasm32"))]
     {

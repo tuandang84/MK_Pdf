@@ -113,6 +113,8 @@ pub enum Dialog {
     PageProps,
     /// Protect Using Password.
     Protect,
+    /// Unlock PDF: take the security off without asking for its permissions password.
+    UnlockPdf,
     /// Bookmarks ▸ New bookmarks from text styles (#1693).
     BookmarksFromTextStyles,
     /// Set Page Boxes (crop, trim, bleed, art, media).
