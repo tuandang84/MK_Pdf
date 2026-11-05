@@ -48,6 +48,13 @@ fn settle(h: &mut Harness<'static, PdfCraftApp>) {
 }
 
 #[test]
+fn update_app_recognizes_mk_pdf_assets() {
+    let stems: Vec<_> = pdfcraft_ui_egui::UPDATE_APP.stems().collect();
+    assert!(stems.contains(&"mk-pdf"), "stems must contain mk-pdf: {stems:?}");
+    assert!(stems.contains(&"pdfcraft"), "stems must contain pdfcraft: {stems:?}");
+}
+
+#[test]
 fn a_newer_release_is_offered_for_download() {
     let mut h = harness(Ok(Some("v99.0.0")));
     h.state_mut().execute("help.check_updates");

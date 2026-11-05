@@ -34,6 +34,7 @@ fn the_exe_has_version_info_with_the_package_version() {
     let resource = &exe[start..];
     for (key, value) in [
         ("ProductName", "MK PDF"),
+        ("CompanyName", "Minh Kim Tech"),
         ("FileDescription", "MK PDF command-line tool"),
         ("LegalCopyright", "Copyright (c) the MK PDF contributors. MIT OR Apache-2.0."),
         ("OriginalFilename", "pdfcraft-cli.exe"),

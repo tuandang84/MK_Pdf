@@ -14,6 +14,7 @@ fn main() {
     }
     let mut res = winresource::WindowsResource::new();
     res.set("ProductName", "MK PDF")
+        .set("CompanyName", "Minh Kim Tech")
         .set("FileDescription", "MK PDF command-line tool")
         .set("LegalCopyright", "Copyright (c) the MK PDF contributors. MIT OR Apache-2.0.")
         .set("OriginalFilename", "pdfcraft-cli.exe")

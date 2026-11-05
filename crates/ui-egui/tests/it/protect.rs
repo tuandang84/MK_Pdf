@@ -147,3 +147,13 @@ fn cancelling_unlock_pdf_changes_nothing() {
     let doc = h.state().session.get(id).unwrap();
     assert!(!doc.dirty && !doc.allows_modification());
 }
+
+#[test]
+fn top_toolbar_unlock_pdf_button_opens_dialog_for_protected_document() {
+    let mut h = restricted_harness();
+    h.run_steps(2);
+    // Find the toolbar button and click it
+    h.get_all_by_label("Unlock PDF").next().unwrap().click();
+    h.run_steps(2);
+    assert_eq!(h.state().dialog, Some(Dialog::UnlockPdf));
+}

@@ -32,6 +32,23 @@ fn harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, P
 }
 
 #[test]
+fn top_toolbar_renders_key_tools_and_unlock_pdf() {
+    let mut h = harness(|_| {});
+    assert!(h.query_all_by_label("Edit a PDF").count() >= 1);
+    assert!(h.query_all_by_label("Combine files").count() >= 1);
+    assert!(h.query_all_by_label("Organize pages").count() >= 1);
+    assert!(h.query_all_by_label("Add comments").count() >= 1);
+    assert!(h.query_all_by_label("Compress a PDF").count() >= 1);
+    assert!(h.query_all_by_label("Unlock PDF").count() >= 1);
+    assert!(h.query_all_by_label("Check for updates…").count() >= 1);
+
+    // Clicking Combine files opens combine tool panel
+    h.get_all_by_label("Combine files").next().unwrap().click();
+    h.run_steps(2);
+    assert_eq!(h.state().left, pdfcraft_ui_egui::LeftPanel::Tool("combine"));
+}
+
+#[test]
 fn home_shows_welcome_and_tools() {
     let h = harness(|_| {});
     h.get_by_label_contains("Welcome to MK PDF");

@@ -5,7 +5,7 @@ use egui::{Align, Color32, CornerRadius, Layout, Rect, Sense, Stroke, vec2};
 
 use crate::canvas::{DocView, Fit, PageLayout};
 use crate::theme::{self, ThemePreference, Tokens};
-use crate::{Dialog, Mode, PdfCraftApp, PropsTab, RightPanel, icons, widgets, window_controls};
+use crate::{Dialog, LeftPanel, Mode, PdfCraftApp, PropsTab, RightPanel, icons, widgets, window_controls};
 
 /// Height of the tab strip when it doubles as the macOS title bar (#789). AppKit draws the traffic
 /// lights itself, centred in the standard 28 pt title-bar band at the top of the window, and moving
@@ -529,6 +529,117 @@ pub fn mode_bar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                     ui.add_space(8.0);
                     if widgets::search_box(ui, tl!("Find tools and commands"), 260.0).clicked() {
                         app.palette_open = true;
+                    }
+                });
+            });
+        });
+}
+
+/// Draw a styled top-toolbar button with an icon and text label.
+fn top_toolbar_button(
+    ui: &mut egui::Ui,
+    t: &Tokens,
+    icon: &str,
+    label: &str,
+    active: bool,
+    tooltip: &str,
+) -> egui::Response {
+    let font = if active { theme::semibold(13.0) } else { theme::medium(13.0) };
+    let text = tl!(label);
+    let label_galley = crate::bidi::layout_ui(ui, text.to_owned(), font, if active { t.accent_text } else { t.text });
+    let text_w = label_galley.size().x;
+    let height = 28.0;
+    let width = text_w + 34.0;
+    let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
+    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), active, text));
+    let press = theme::Press::track(ui, &resp);
+
+    if active {
+        ui.painter().rect(
+            rect,
+            CornerRadius::same(6),
+            t.hover,
+            Stroke::new(1.0, t.accent),
+            egui::StrokeKind::Inside,
+        );
+    } else {
+        press.wash(ui, rect, 6, false);
+    }
+
+    let body = rect.translate(press.offset());
+    let icon_color = if active { t.accent_text } else { t.icon };
+    icons::paint(ui, Rect::from_center_size(body.left_center() + vec2(15.0, 0.0), vec2(16.0, 16.0)), icon, 16.0, icon_color);
+    ui.painter().galley(body.left_center() + vec2(28.0, -label_galley.size().y / 2.0), label_galley, if active { t.accent_text } else { t.text });
+
+    let resp = theme::hand(resp);
+    if tooltip.is_empty() { resp } else { resp.on_hover_text(tooltip) }
+}
+
+/// The top feature toolbar containing key actions:
+/// Edit a PDF, Combine files, Organize pages, Add comments, Compress a PDF, Unlock PDF, and Check for updates.
+pub fn top_toolbar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
+    let t = Tokens::get(ui.ctx());
+    egui::Panel::top("top_toolbar")
+        .exact_size(38.0)
+        .frame(egui::Frame::NONE.fill(t.chrome).inner_margin(egui::Margin::symmetric(10, 0)).stroke(Stroke::new(1.0, t.divider)))
+        .show(ui, |ui| {
+            ui.horizontal_centered(|ui| {
+                ui.spacing_mut().item_spacing.x = 4.0;
+
+                // 1. Edit a PDF
+                let edit_active = app.mode == Mode::Edit || matches!(app.left, LeftPanel::Tool("edit"));
+                if top_toolbar_button(ui, &t, "edit-3", "Edit a PDF", edit_active, tl!("Edit a PDF")).clicked() {
+                    app.select_mode(Mode::Edit);
+                }
+
+                // 2. Combine files
+                let combine_active = matches!(app.left, LeftPanel::Tool("combine"));
+                if top_toolbar_button(ui, &t, "files", "Combine files", combine_active, tl!("Combine files")).clicked() {
+                    app.select_tool("combine");
+                }
+
+                // 3. Organize pages
+                let organize_active = matches!(app.left, LeftPanel::Tool("organize"))
+                    || app.active.and_then(|i| app.views.get(i)).is_some_and(|v| v.organize);
+                if top_toolbar_button(ui, &t, "layout-grid", "Organize pages", organize_active, tl!("Organize pages")).clicked() {
+                    app.select_tool("organize");
+                }
+
+                // 4. Add comments
+                let comment_active = matches!(app.left, LeftPanel::Tool("comment"));
+                if top_toolbar_button(ui, &t, "message-square", "Add comments", comment_active, tl!("Add comments")).clicked() {
+                    app.select_tool("comment");
+                }
+
+                // 5. Compress a PDF
+                let compress_active = matches!(app.left, LeftPanel::Tool("compress"));
+                if top_toolbar_button(ui, &t, "file-archive", "Compress a PDF", compress_active, tl!("Compress a PDF")).clicked() {
+                    app.select_tool("compress");
+                }
+
+                // Separator
+                ui.add_space(4.0);
+                ui.painter().vline(ui.cursor().left(), ui.max_rect().y_range().shrink(8.0), Stroke::new(1.0, t.divider));
+                ui.add_space(8.0);
+
+                // 6. Unlock PDF (without password)
+                let unlock_active = app.dialog == Some(Dialog::UnlockPdf);
+                if top_toolbar_button(ui, &t, "lock-open", "Unlock PDF", unlock_active, tl!("Unlock PDF")).clicked() {
+                    if app.active.is_none() {
+                        app.open_dialog();
+                    } else if app.active_ids().and_then(|(_, id)| app.session.get(id)).is_some_and(|d| d.security_summary().is_some()) {
+                        app.dialog = Some(Dialog::UnlockPdf);
+                    } else {
+                        app.notify_tr("This document isn't password-protected");
+                    }
+                }
+
+                // Right side: Check for updates
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.spacing_mut().item_spacing.x = 4.0;
+                    let check_tip = tl!("Check for updates…");
+                    if top_toolbar_button(ui, &t, "rotate-cw", "Check for updates…", false, check_tip).clicked() {
+                        app.check_for_updates();
                     }
                 });
             });

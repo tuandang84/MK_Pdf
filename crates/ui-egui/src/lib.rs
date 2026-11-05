@@ -21,6 +21,7 @@ pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
     name: "MK PDF",
     developer: "Minh Kim Tech",
     repo: "tuandang84/MK_Pdf",
+    former_ids: &["mk-pdf", "printcraft"],
     icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.pdfcraft.png")),
     accent: Some([0xb7, 0x02, 0x28]),
     ..craft_update::suite::PDFCRAFT
