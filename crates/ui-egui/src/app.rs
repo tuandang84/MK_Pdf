@@ -69,6 +69,8 @@ impl PdfCraftApp {
             views: Vec::new(),
             closed_tabs: Vec::new(),
             active: None,
+            ribbon_tab: crate::RibbonTab::Home,
+            ribbon_collapsed: false,
             mode: Mode::AllTools,
             default_mode: Mode::AllTools,
             view_defaults: Default::default(),
@@ -663,9 +665,19 @@ impl eframe::App for PdfCraftApp {
         if self.draws_window_frame() {
             window_controls::resize_edges(&ctx);
         }
+        let is_short = ui.available_height() < 600.0;
+        let show_ribbon = !self.ribbon_collapsed && !self.all_tools_full && !is_short;
         chrome::tab_strip(self, ui);
-        chrome::mode_bar(self, ui);
-        chrome::top_toolbar(self, ui);
+        ribbon::ribbon_header(self, ui);
+        if show_ribbon {
+            ribbon::ribbon_command_strip(self, ui);
+        }
+        if let Some(index) = self.active
+            && self.views.get(index).is_some_and(|v| v.line_editor.is_some())
+            && self.toast.as_ref().is_some_and(|(msg, _)| msg.contains("Click text") || msg.contains("クリック"))
+        {
+            self.toast = None;
+        }
         // Whichever way another tab came to the front, it shows instead of the expanded view.
         if self.all_tools_full && self.all_tools_tab != self.shown_tab() {
             self.all_tools_full = false;

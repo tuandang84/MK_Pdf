@@ -45,6 +45,8 @@ macro_rules! tl_ctx {
 }
 pub mod canvas;
 mod chrome;
+pub mod ribbon;
+pub use ribbon::RibbonTab;
 mod image_engine;
 pub use combine_grid::ThumbState as CombineThumb;
 pub use combine_ui::{Columns as CombineColumns, CombineView, Lock as CombineLock, SortKey};
@@ -266,6 +268,8 @@ pub struct PdfCraftApp {
     pub(crate) closed_tabs: Vec<String>,
     /// `None` shows the Home tab.
     pub active: Option<usize>,
+    pub ribbon_tab: RibbonTab,
+    pub ribbon_collapsed: bool,
     pub mode: Mode,
     /// Workspace used for newly opened PDFs; independent of PDF Initial View metadata.
     pub default_mode: Mode,

@@ -24,8 +24,10 @@ pub(super) mod tab_context;
 pub(crate) const APP_NAME: &str = "MK PDF";
 
 /// The top bar's width after the menus: the mode tabs, the search box and the buttons.
+#[allow(dead_code)]
 const ROW_AFTER_MENUS: f32 = 720.0;
 /// The narrowest the menu bar gets: one "Menu" title.
+#[allow(dead_code)]
 const MIN_MENUS_WIDTH: f32 = 80.0;
 
 /// Menu-only commands. The registry's commands keep their own ids.
@@ -81,6 +83,7 @@ const PANELS: &[(RightPanel, &str, &str)] = &[
 
 /// The English titles of the menus and submenus, for the bar's mnemonics in languages whose
 /// labels have no ASCII letter.
+#[allow(dead_code)]
 const TITLES: &[&str] = &[
     "File",
     "Edit",
@@ -237,6 +240,7 @@ fn extra(id: &str) -> Option<&'static (&'static str, &'static str, Option<Shortc
 }
 
 /// The English label of an item's command, for the bar's mnemonics.
+#[allow(dead_code)]
 fn english_label(command: &CommandRef) -> Option<String> {
     if let Some(spec) = commands::command(&command.id) {
         return Some(spec.label.to_owned());
@@ -247,6 +251,7 @@ fn english_label(command: &CommandRef) -> Option<String> {
     FILL.iter().find(|(id, _)| *id == command.id).map(|(_, label)| (*label).to_owned())
 }
 
+#[allow(dead_code)]
 fn english(labeled: Labeled<'_>) -> Option<String> {
     match labeled {
         Labeled::Command(command) => english_label(command),
@@ -570,6 +575,7 @@ impl PdfCraftApp {
 
     /// The menu bar drawn in the window (Windows, Linux, the web, and macOS when the native one
     /// couldn't be installed), where the top bar starts. Runs the commands chosen.
+    #[allow(dead_code)]
     pub(crate) fn menu_bar_ui(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         let bar = craft_menu::layout(&self.menu_bar(&ctx), Target::current(), &layout_options()).bar;

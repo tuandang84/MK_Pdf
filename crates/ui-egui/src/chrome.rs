@@ -23,9 +23,9 @@ const MAC_LIGHTS_LEFT: f32 = 10.0;
 /// lights plus the same gap the lights keep from the top of the window.
 pub const MAC_CONTENT_LEFT: f32 = MAC_LIGHTS_LEFT + 2.0 * MAC_LIGHT_PITCH + MAC_LIGHT + (MAC_TITLE_BAR - MAC_LIGHT) / 2.0;
 /// The strip and its controls everywhere else.
-const TAB_STRIP: f32 = 38.0;
-const TAB_HEIGHT: f32 = 30.0;
-const STRIP_BUTTON: f32 = 28.0;
+const TAB_STRIP: f32 = 28.0;
+const TAB_HEIGHT: f32 = 26.0;
+const STRIP_BUTTON: f32 = 24.0;
 
 /// Draw the window's tab strip: home and open controls, shrinkable and scrollable document tabs with drag
 /// reordering, and platform window controls.
@@ -65,6 +65,7 @@ pub fn tab_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                     });
                     ui.add_space(window_controls::SIDE_GAP - 4.0);
                 }
+
                 if icons::button(ui, "house", button, app.active.is_none() && !app.combine_showing(), tl!("Home")).clicked() {
                     app.active = None;
                     app.combine_tab.focused = false;
@@ -481,6 +482,7 @@ fn tab(ui: &mut egui::Ui, spec: TabSpec<'_>, close: &mut Option<usize>) -> egui:
     theme::hand(resp).on_hover_text(if dirty { crate::i18n::fmt(tl!("{name} — unsaved changes"), &[("name", &shown)]) } else { shown })
 }
 
+#[allow(dead_code)]
 pub fn mode_bar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     egui::Panel::top("mode_bar")
@@ -536,6 +538,7 @@ pub fn mode_bar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
 }
 
 /// Draw a styled top-toolbar button with an icon and text label.
+#[allow(dead_code)]
 fn top_toolbar_button(
     ui: &mut egui::Ui,
     t: &Tokens,
@@ -577,6 +580,7 @@ fn top_toolbar_button(
 
 /// The top feature toolbar containing key actions:
 /// Edit a PDF, Combine files, Organize pages, Add comments, Compress a PDF, Unlock PDF, and Check for updates.
+#[allow(dead_code)]
 pub fn top_toolbar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     egui::Panel::top("top_toolbar")

@@ -479,6 +479,7 @@ pub fn toast(app: &mut PdfCraftApp, ctx: &egui::Context) {
     let lift = if card > 0.0 { 28.0 + card + 10.0 } else { 28.0 };
     egui::Area::new(egui::Id::unique("toast"))
         .order(egui::Order::Tooltip)
+        .interactable(false)
         .pivot(Align2::CENTER_BOTTOM)
         .fixed_pos(screen.center_bottom() - vec2(0.0, lift))
         .show(ctx, |ui| {
