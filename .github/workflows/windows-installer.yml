@@ -1,0 +1,140 @@
+# Fork-only Windows installer.
+#
+# The shared upstream release.yml builds every platform; it needs a paid macOS
+# larger runner and code-signing secrets this fork does not have. This fork
+# ships Windows alone: one x64 MSI, published as a GitHub Release. The portable
+# ZIP that packaging/windows/package.ps1 also builds is not uploaded.
+#
+# Trigger it by pushing a v* tag (e.g. v0.17.0), or from Actions > Windows
+# installer > Run workflow. The version comes from [workspace.package] in
+# Cargo.toml unless the dispatch overrides it.
+name: Windows installer
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version override, e.g. 0.17.1 (empty: Cargo.toml)"
+        type: string
+        default: ""
+      publish:
+        description: "Publish a GitHub Release (a v* tag push always publishes)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-installer-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  RUST_BACKTRACE: "1"
+
+jobs:
+  version:
+    name: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      date: ${{ steps.v.outputs.date }}
+      prerelease: ${{ steps.v.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: v
+        uses: storytold/craft-common-actions/actions/resolve-version@main
+        with:
+          input-version: ${{ inputs.version }}
+          app-title: MK PDF
+
+  windows:
+    name: Windows x64 installer
+    needs: [version]
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      PDFCRAFT_VERSION: ${{ needs.version.outputs.version }}
+      PDFCRAFT_BUILD_DATE: ${{ needs.version.outputs.date }}
+      PDFCRAFT_BUILD_SHA: ${{ github.sha }}
+      CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
+      CRAFT_FONTS_REQUIRED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check out craft-fonts
+        uses: storytold/craft-common-actions/actions/checkout-craft-fonts@main
+        with:
+          ref: b076417b5880bd4154bd22f00695b1d28c6bea83
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
+          targets: x86_64-pc-windows-msvc
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: windows-installer-x64
+      - name: Install WiX
+        uses: storytold/craft-common-actions/actions/install-wix@main
+        with:
+          wix-version: 5.0.2
+      - name: Build the MSI
+        shell: pwsh
+        run: ./packaging/windows/package.ps1 -Arch x64
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-installer-x64
+          path: dist/release/*.msi
+          if-no-files-found: error
+
+  publish:
+    name: Publish the release
+    if: startsWith(github.ref, 'refs/tags/') || inputs.publish == true
+    needs: [version, windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: windows-installer-x64
+          path: artifacts
+      - name: Checksums and release
+        shell: bash
+        working-directory: artifacts
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
+          REF: ${{ github.ref }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          msi="$(ls ./*.msi)"
+          mv "$msi" "mk-pdf-$VERSION-windows-x64.msi"
+          sha256sum -- ./*.msi > SHA256SUMS.txt
+          tag="v$VERSION"
+          pre=()
+          if [ "$PRERELEASE" = "true" ]; then pre=(--prerelease); fi
+          # A tag push already has its tag; a dispatch has to create it.
+          target=()
+          if [ "${REF#refs/tags/}" = "$REF" ]; then target=(--target "$GITHUB_SHA"); fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" --clobber -- ./*.msi SHA256SUMS.txt
+          else
+            gh release create "$tag" --title "MK PDF v$VERSION" \
+              --generate-notes "${target[@]}" "${pre[@]}" -- ./*.msi SHA256SUMS.txt
+          fi
+          {
+            echo "### MK PDF v$VERSION"
+            echo
+            echo "Installer: \`mk-pdf-$VERSION-windows-x64.msi\`"
+            echo
+            echo "https://github.com/$GH_REPO/releases/tag/$tag"
+          } >>"$GITHUB_STEP_SUMMARY"
