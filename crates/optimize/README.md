@@ -42,7 +42,7 @@ let report = optimize_with_progress(&mut doc, &settings, &mut |stage| keep_going
   (grey, indexed, a separation) or an image mask, stored with no filter, with general-purpose ones
   or with CCITT fax or JBIG2 after any of those (decoded by `Document::decoded_image_within`, no further
   than its rows can need; byte-aligned Group 3 with end-of-line codes but none before the first
-  row, not as T.4 sends them, is read as PdfCraft draws it, which at `/K 0` may be other rows than
+  row, not as T.4 sends them, is read as MK PDF draws it, which at `/K 0` may be other rows than
   were coded, and an image stored again keeps them). Packed to one bit first, unless a colour-key `/Mask` is in the image's
   own values: eight-bit grey of only 0 and 255; eight-bit `DeviceRGB` of only black and white,
   which becomes `DeviceGray` (not calibrated RGB or RGB with a profile, nor one drawn or listed
@@ -86,7 +86,7 @@ let report = optimize_with_progress(&mut doc, &settings, &mut |stage| keep_going
     alone when JBIG2 is asked for, is stored again as the compression asks when that is smaller (as JBIG2 symbols where
     its own coding is a generic region, say); a symbol-coded scan, averaged, loses its exact
     repeats and often comes out larger, and then stays as it is. A JBIG2 image stored again refers to no
-    `/JBIG2Globals`, and one whose page isn't its size (PdfCraft's
+    `/JBIG2Globals`, and one whose page isn't its size (MK PDF's
     renderer draws the whole page into the image) is left alone. With Retain, a resampled image
     keeps its kind of compression (CCITT, JBIG2, or Flate) and nothing else changes; an image of
     more bits is then left to the grey or colour settings. Every change is kept only when it is

@@ -10,12 +10,12 @@ use super::pdf::{Content, Font, Fonts, Stamp, colors, name, text};
 /// Links to this prefix in showcase.html mark where annotations go.
 const MARKER_PREFIX: &str = "https://mark.pdfcraft.invalid/";
 
-const TITLE: &str = "PdfCraft Showcase";
-const AUTHOR: &str = "PdfCraft";
+const TITLE: &str = "MK PDF Showcase";
+const AUTHOR: &str = "MK PDF";
 const SUBJECT: &str = "A specimen document exercising typography, world scripts, vector graphics, \
                        MathML, forms, annotations, layers and attachments.";
-const KEYWORDS: &[&str] = &["PDF", "typography", "OpenType", "AcroForm", "annotations", "optional content", "PdfCraft"];
-const CREATOR: &str = "pdfcraft xtask demo-pdf";
+const KEYWORDS: &[&str] = &["PDF", "typography", "OpenType", "AcroForm", "annotations", "optional content", "MK PDF"];
+const CREATOR: &str = "MK PDF xtask demo-pdf";
 
 /// Chrome-printed page indices (0-based) that the post-processor refers to.
 const PAGE_CONTENTS: usize = 1;
@@ -376,7 +376,7 @@ fn decode_text(bytes: &[u8]) -> String {
 fn tidy_title(title: &str) -> String {
     const ACRONYMS: &[&str] = &["PDF"];
     // Chrome drops the <br> between the two lines of the cover title.
-    if title == "PdfCraftShowcase" {
+    if title == "MK PDFShowcase" {
         return TITLE.to_string();
     }
     let title = title.split_whitespace().collect::<Vec<_>>().join(" ");

@@ -1,8 +1,8 @@
-# PdfCraft architecture
+# MK PDF architecture
 
 > **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-23 · **Change:** minor (xtask ci: translation gaps report) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 
-How PdfCraft is built today. The design rationale and the planned crates live in
+How MK PDF is built today. The design rationale and the planned crates live in
 `plan/architecture.md` and `plan/adr/` (local-only); this file describes what is on `main`. Each
 crate's `README.md` has the detail.
 

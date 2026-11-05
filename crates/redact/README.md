@@ -30,7 +30,7 @@ clear_marks(&mut doc, None)?;                        // remove marks without app
   decoded for certain refuses the redaction (`RedactError::SharedJbig2Globals`). Codecs redaction doesn't decode (DCT, JPX) are
   removed whole (fail-closed), and so is a JBIG2 image whose page isn't its size (the renderer
   draws the whole page into the image, so the rows cleared wouldn't be the ones shown) or of more
-  than one bit or component, and Group 3 on bytes (`/K` 0 or more, `/EncodedByteAlign`): PdfCraft's
+  than one bit or component, and Group 3 on bytes (`/K` 0 or more, `/EncodedByteAlign`): MK PDF's
   renderer draws some of its layouts (the fill ending each end-of-line code on a byte) as other
   rows than the decoder reads, so a mark over what is shown needn't cover what is cleared; inline images under an area are removed. Images with separate `/SMask`
   or `/Mask` data, and images whose data decodes to more than three times their declared raster

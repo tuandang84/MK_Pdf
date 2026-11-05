@@ -20,7 +20,7 @@ Layer L4. Create a PDF (Acrobat's Create a PDF tool), execution plan M10.2:
   `from_images`. The largest page side is still capped at 14,400 points;
 - `from_text(text, …)`: plain text set in Helvetica, wrapped and paginated. Text Helvetica
   can't draw is refused, naming the line and the character, never set as `?`.
-- `from_text_escaped(text, …)`: the same for reports PdfCraft generates from documents
+- `from_text_escaped(text, …)`: the same for reports MK PDF generates from documents
   (comment summaries, compare reports): such characters are written as `[U+XXXX]` and the first
   line says so (`ESCAPED_NOTE`).
 
@@ -29,7 +29,7 @@ Every function returns a `pdfcraft_cos::Document`; the caller writes it.
 Image export and Save Image As apply each lossless image's Decode pair before converting its color components.
 JBIG2 images and masks are decoded through `pdfcraft_cos::Document::decoded_image` (`pdfcraft_filters::decode_jbig2`), behind
 other filters too, with the `/JBIG2Globals` of their own `/DecodeParms` entry, as `JBIG2Decode` gives them: black as 0. An image
-whose JBIG2 page isn't its size (PdfCraft's renderer draws the whole page into the image; the page is refused before it is decoded),
+whose JBIG2 page isn't its size (MK PDF's renderer draws the whole page into the image; the page is refused before it is decoded),
 or whose globals can't be read or decode to more than 32 MiB (they are decoded before the page's size is known, so they have a
 limit of their own), is skipped; such a mask is left out and the image exported opaque, as JPX and CCITT
 masks are.

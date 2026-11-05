@@ -23,7 +23,7 @@ fn main() {
         .set_icon_with_id("../../assets/app-icon/pdfcraft-document.ico", "2")
         .set_manifest(windows_manifest::WINDOWS_MANIFEST)
         .set("ProductName", "MK PDF")
-        .set("FileDescription", "MK PDF PDF workbench")
+        .set("FileDescription", "MK PDF workbench")
         .set("LegalCopyright", "Copyright (c) the MK PDF contributors. MIT OR Apache-2.0.")
         .set("OriginalFilename", "pdfcraft.exe")
         .set("InternalName", "pdfcraft");

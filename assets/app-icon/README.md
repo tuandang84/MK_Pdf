@@ -1,6 +1,6 @@
-# PdfCraft app icon
+# MK PDF app icon
 
-<img src="pdfcraft-small.svg" alt="PdfCraft app icon: the MK monogram and the word PDF in white on a blue disc" width="128">
+<img src="pdfcraft-small.svg" alt="MK PDF app icon: the MK monogram and the word PDF in white on a blue disc" width="128">
 
 **Mark:** a blue disc carrying Minh Kim Tech's **MK** monogram, the word **PDF** and the company name
 **MINH KIM TECH** in white. The full logo, with its placement and sizes, is in
@@ -39,7 +39,7 @@ Where it shows: `apps/pdfcraft/src/main.rs` sets the window icon (Dock, taskbar,
 Wayland app id `ai.storyteller.pdfcraft`; `packaging/linux/ai.storyteller.pdfcraft.desktop` names the
 hicolor icon.
 
-Windows PDF files use resource 2 (`"pdfcraft.exe",-2`) when PdfCraft is chosen as the default
+Windows PDF files use resource 2 (`"pdfcraft.exe",-2`) when MK PDF is chosen as the default
 reader; the app keeps resource 1. The document outline is adapted from Lucide `file-text`
 1.49.0 (ISC); its badge and outlined lettering are original (`MIT OR Apache-2.0`), covered by
 [LICENSE-document.txt](LICENSE-document.txt). Both icons are embedded, requiring no runtime
