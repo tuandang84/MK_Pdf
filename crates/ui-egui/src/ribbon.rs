@@ -6,6 +6,7 @@ use super::{
     icons, theme::{self, Tokens}, Dialog, LeftPanel, Mode, PdfCraftApp,
     QuickTool, RightPanel,
 };
+use crate::canvas::Fit;
 
 /// The primary ribbon tabs modelled after Foxit PhantomPDF Standard 7.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -97,13 +98,13 @@ pub fn ribbon_header(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                 if print.clicked() {
                     app.run_command("print.dialog");
                 }
-                let undo_tip = crate::commands::command_tip(ui.ctx(), tl!("Undo ({key})"), "app.undo");
+                let undo_tip = crate::commands::command_tip(ui.ctx(), tl!("Undo ({key})"), "edit.undo");
                 if icons::button(ui, "undo-2", qat_size, false, &undo_tip).clicked() {
-                    app.run_command("app.undo");
+                    app.run_command("edit.undo");
                 }
-                let redo_tip = crate::commands::command_tip(ui.ctx(), tl!("Redo ({key})"), "app.redo");
+                let redo_tip = crate::commands::command_tip(ui.ctx(), tl!("Redo ({key})"), "edit.redo");
                 if icons::button(ui, "redo-2", qat_size, false, &redo_tip).clicked() {
-                    app.run_command("app.redo");
+                    app.run_command("edit.redo");
                 }
                 let unlock_tip = tl!("Unlock PDF - Remove restrictions and passwords without entering password");
                 if icons::button(ui, "lock-open", qat_size, false, unlock_tip).clicked() {
@@ -509,6 +510,31 @@ pub fn small_ribbon_button(
     if tooltip.is_empty() { resp } else { resp.on_hover_text(tooltip) }
 }
 
+/// Run a catalogue command by id. A disabled command says why it can't run (the palette's
+/// reasoning) instead of doing nothing, and an id the catalogue doesn't know is a bug: it is
+/// reported rather than silently swallowed.
+fn run(app: &mut PdfCraftApp, id: &str) {
+    if pdfcraft_engine::commands::command(id).is_none() {
+        log::error!("ribbon button names the unknown command {id}");
+        return;
+    }
+    app.run_command(id);
+}
+
+/// The current page's view, when a document is open.
+fn view(app: &mut PdfCraftApp) -> Option<&mut crate::DocView> {
+    app.active.and_then(|i| app.views.get_mut(i))
+}
+
+impl PdfCraftApp {
+    /// Set the current page's base layout and continuous scrolling from a ribbon button.
+    fn set_ribbon_display(&mut self, layout: crate::canvas::PageLayout, continuous: bool) {
+        if let Some(v) = view(self) {
+            v.set_display(layout, continuous);
+        }
+    }
+}
+
 /// --- HOME RIBBON ---
 fn show_home_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
     // Group 1: Tools
@@ -524,10 +550,10 @@ fn show_home_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
         }
     });
 
-    // Group 2: Create & Edit (Contains key tools tested by top_toolbar_renders_key_tools_and_unlock_pdf)
+    // Group 2: Create & Edit
     ribbon_group(ui, "Create & Edit", t, |ui| {
         let edit_active = app.mode == Mode::Edit || matches!(app.left, LeftPanel::Tool("edit"));
-        if large_ribbon_button(ui, t, "edit-3", "Edit Text", edit_active, tl!("Edit a PDF")).clicked() {
+        if large_ribbon_button(ui, t, "file-pen-line", "Edit Text", edit_active, tl!("Edit a PDF")).clicked() {
             app.select_mode(Mode::Edit);
             app.ribbon_tab = RibbonTab::Edit;
         }
@@ -548,9 +574,8 @@ fn show_home_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
             app.select_tool("comment");
         }
 
-        let compress_active = matches!(app.left, LeftPanel::Tool("compress"));
-        if large_ribbon_button(ui, t, "file-archive", "Compress a PDF", compress_active, tl!("Compress a PDF")).clicked() {
-            app.select_tool("compress");
+        if large_ribbon_button(ui, t, "file-down", "Compress a PDF", false, tl!("Compress a PDF")).clicked() {
+            run(app, "optimize.reduce");
         }
     });
 
@@ -561,18 +586,18 @@ fn show_home_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
             unlock_pdf_action(app);
         }
 
-        if large_ribbon_button(ui, t, "shield", "Protect", app.dialog == Some(Dialog::Protect), tl!("Password protect")).clicked() {
-            app.dialog = Some(Dialog::Protect);
+        if large_ribbon_button(ui, t, "shield-check", "Protect", app.dialog == Some(Dialog::Protect), tl!("Password protect")).clicked() {
+            run(app, "protect.password");
         }
     });
 
     // Group 4: Updates & Help
     ribbon_group(ui, "Help & Updates", t, |ui| {
-        if large_ribbon_button(ui, t, "rotate-cw", "Check for updates…", false, tl!("Check for updates…")).clicked() {
+        if large_ribbon_button(ui, t, "cloud", "Check for updates…", false, tl!("Check for updates…")).clicked() {
             app.check_for_updates();
         }
-        if large_ribbon_button(ui, t, "circle-help", "About", false, tl!("About MK PDF")).clicked() {
-            app.dialog = Some(Dialog::About);
+        if large_ribbon_button(ui, t, "info", "About", false, tl!("About MK PDF")).clicked() {
+            run(app, "help.about");
         }
     });
 }
@@ -595,68 +620,55 @@ fn show_edit_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
     // Group 2: Insert
     ribbon_group(ui, "Insert", t, |ui| {
         if large_ribbon_button(ui, t, "image", "Image", false, "Insert Image").clicked() {
-            app.run_command("edit.add_image");
+            run(app, "edit.image");
         }
         if large_ribbon_button(ui, t, "bookmark", "Bookmark", false, "Add Bookmark").clicked() {
-            app.right = Some(RightPanel::Bookmarks);
+            run(app, "bookmark.add");
         }
-        if large_ribbon_button(ui, t, "link", "Link", false, "Add Link").clicked() {
-            app.select_tool("link");
+        if large_ribbon_button(ui, t, "link-2", "Link", app.quick_tool == QuickTool::Link, "Add Link").clicked() {
+            run(app, "edit.link");
         }
         if large_ribbon_button(ui, t, "paperclip", "File Attachment", false, "Attach File").clicked() {
-            app.right = Some(RightPanel::Attachments);
+            run(app, "edit.attach");
         }
     });
 
     // Group 3: Edit Content
     ribbon_group(ui, "Edit Content", t, |ui| {
         let text_active = app.mode == Mode::Edit;
-        if large_ribbon_button(ui, t, "edit-3", "Text & Paragraph", text_active, "Edit Text & Paragraphs").clicked() {
-            app.select_mode(Mode::Edit);
+        if large_ribbon_button(ui, t, "text-cursor-input", "Text", text_active, "Edit Text & Paragraphs").clicked() {
+            run(app, "edit.edit_text");
         }
-        if large_ribbon_button(ui, t, "image", "Image & Object", text_active, "Edit Images and Objects").clicked() {
-            app.select_mode(Mode::Edit);
+        if large_ribbon_button(ui, t, "image-plus", "Image & Object", text_active, "Edit Images and Objects").clicked() {
+            run(app, "edit.edit_text");
         }
     });
 
-    // Group 4: Font & Paragraph
-    ribbon_group(ui, "Font & Paragraph", t, |ui| {
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                if small_ribbon_button(ui, t, "bold", "Bold", false, "Bold").clicked() {
-                    app.run_command("edit.bold");
-                }
-                if small_ribbon_button(ui, t, "italic", "Italic", false, "Italic").clicked() {
-                    app.run_command("edit.italic");
-                }
-                if small_ribbon_button(ui, t, "underline", "Underline", false, "Underline").clicked() {
-                    app.run_command("edit.underline");
-                }
-            });
-            ui.horizontal(|ui| {
-                if small_ribbon_button(ui, t, "align-left", "Left", false, "Align Left").clicked() {
-                    app.run_command("edit.align_left");
-                }
-                if small_ribbon_button(ui, t, "align-center", "Center", false, "Align Center").clicked() {
-                    app.run_command("edit.align_center");
-                }
-                if small_ribbon_button(ui, t, "align-right", "Right", false, "Align Right").clicked() {
-                    app.run_command("edit.align_right");
-                }
-            });
-        });
+    // Group 4: Add
+    ribbon_group(ui, "Add", t, |ui| {
+        if large_ribbon_button(ui, t, "type", "Text Box", false, "Add a text box").clicked() {
+            run(app, "comment.freetext");
+        }
+        if large_ribbon_button(ui, t, "image-plus", "Image", false, "Insert Image").clicked() {
+            run(app, "edit.image");
+        }
+        if large_ribbon_button(ui, t, "signature", "Sign", false, "Fill & Sign").clicked() {
+            run(app, "sign.fill.signature");
+        }
     });
 
     // Group 5: Arrange
     ribbon_group(ui, "Arrange", t, |ui| {
-        if large_ribbon_button(ui, t, "rotate-ccw", "Rotate Left", false, "Rotate 90° CCW").clicked() {
-            app.run_command("page.rotate_ccw");
-        }
-        if large_ribbon_button(ui, t, "rotate-cw", "Rotate Right", false, "Rotate 90° CW").clicked() {
-            app.run_command("page.rotate_cw");
-        }
-        if large_ribbon_button(ui, t, "crop", "Crop", false, "Crop Page").clicked() {
-            app.select_tool("crop");
+        if large_ribbon_button(ui, t, "rotate-ccw", "Rotate Left", false, "Rotate 90° CCW").clicked()
+            && let Some(v) = view(app) {
+                v.rotate_view(false);
+            }
+        if large_ribbon_button(ui, t, "rotate-cw", "Rotate Right", false, "Rotate 90° CW").clicked()
+            && let Some(v) = view(app) {
+                v.rotate_view(true);
+            }
+        if large_ribbon_button(ui, t, "crop", "Crop", app.quick_tool == QuickTool::Crop, "Crop Page").clicked() {
+            run(app, "page.crop");
         }
     });
 }
@@ -666,37 +678,37 @@ fn show_organize_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
     ribbon_group(ui, "Pages", t, |ui| {
         let org_active = matches!(app.left, LeftPanel::Tool("organize"));
         if large_ribbon_button(ui, t, "layout-grid", "Page Grid", org_active, "Organize Page Grid").clicked() {
-            app.select_tool("organize");
+            run(app, "page.organize");
         }
         if large_ribbon_button(ui, t, "file-plus-2", "Insert", false, "Insert Pages").clicked() {
-            app.run_command("page.insert");
+            run(app, "page.insert");
         }
         if large_ribbon_button(ui, t, "trash-2", "Delete", false, "Delete Pages").clicked() {
-            app.run_command("page.delete");
+            run(app, "page.delete");
         }
         if large_ribbon_button(ui, t, "file-output", "Extract", false, "Extract Pages").clicked() {
-            app.run_command("page.extract");
+            run(app, "page.extract");
         }
     });
 
     ribbon_group(ui, "Page Marks", t, |ui| {
         if large_ribbon_button(ui, t, "heading", "Header & Footer", false, "Add Header and Footer").clicked() {
-            app.run_command("page.header_footer");
+            run(app, "edit.header_footer");
         }
         if large_ribbon_button(ui, t, "stamp", "Watermark", false, "Add Watermark").clicked() {
-            app.run_command("page.watermark");
+            run(app, "edit.watermark");
         }
         if large_ribbon_button(ui, t, "hash", "Bates Numbers", false, "Bates Numbering").clicked() {
-            app.run_command("page.bates_numbering");
+            run(app, "edit.bates");
         }
     });
 
     ribbon_group(ui, "Tools", t, |ui| {
-        if large_ribbon_button(ui, t, "split", "Split", false, "Split Document").clicked() {
-            app.select_tool("split");
+        if large_ribbon_button(ui, t, "scissors", "Split", false, "Split Document").clicked() {
+            run(app, "page.split");
         }
-        if large_ribbon_button(ui, t, "crop", "Crop", false, "Crop Pages").clicked() {
-            app.select_tool("crop");
+        if large_ribbon_button(ui, t, "crop", "Crop", app.quick_tool == QuickTool::Crop, "Crop Pages").clicked() {
+            run(app, "page.crop");
         }
     });
 }
@@ -704,48 +716,57 @@ fn show_organize_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
 /// --- COMMENT RIBBON ---
 fn show_comment_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
     ribbon_group(ui, "Pin & Notes", t, |ui| {
-        if large_ribbon_button(ui, t, "message-square", "Note", false, "Sticky Note").clicked() {
-            app.run_command("annot.note");
+        if large_ribbon_button(ui, t, "sticky-note", "Note", false, "Sticky Note").clicked() {
+            run(app, "comment.note");
+        }
+        if large_ribbon_button(ui, t, "type", "Text Box", false, "Add a text box").clicked() {
+            run(app, "comment.freetext");
         }
         if large_ribbon_button(ui, t, "paperclip", "Attachment", false, "File Attachment").clicked() {
-            app.run_command("annot.file_attachment");
+            run(app, "comment.attach");
         }
     });
 
     ribbon_group(ui, "Text Markup", t, |ui| {
         if large_ribbon_button(ui, t, "highlighter", "Highlight", false, "Highlight Text").clicked() {
-            app.run_command("annot.highlight");
+            run(app, "comment.highlight");
         }
         if large_ribbon_button(ui, t, "underline", "Underline", false, "Underline Text").clicked() {
-            app.run_command("annot.underline");
+            run(app, "comment.underline");
         }
         if large_ribbon_button(ui, t, "strikethrough", "Strikeout", false, "Strikeout Text").clicked() {
-            app.run_command("annot.strikeout");
+            run(app, "comment.strikeout");
         }
     });
 
     ribbon_group(ui, "Drawing", t, |ui| {
         if large_ribbon_button(ui, t, "pencil", "Pencil", false, "Freehand Pencil").clicked() {
-            app.run_command("annot.ink");
+            run(app, "comment.ink");
         }
         if large_ribbon_button(ui, t, "eraser", "Eraser", false, "Eraser").clicked() {
-            app.run_command("annot.eraser");
+            run(app, "comment.eraser");
         }
         if large_ribbon_button(ui, t, "square", "Rectangle", false, "Rectangle").clicked() {
-            app.run_command("annot.square");
+            run(app, "comment.square");
         }
         if large_ribbon_button(ui, t, "circle", "Oval", false, "Oval / Circle").clicked() {
-            app.run_command("annot.circle");
+            run(app, "comment.circle");
+        }
+        if large_ribbon_button(ui, t, "arrow-up-right", "Arrow", false, "Arrow").clicked() {
+            run(app, "comment.arrow");
+        }
+        if large_ribbon_button(ui, t, "stamp", "Stamp", false, "Add a stamp").clicked() {
+            run(app, "comment.stamp");
         }
     });
 
     ribbon_group(ui, "Manage", t, |ui| {
         let comm_active = app.right == Some(RightPanel::Comments);
         if large_ribbon_button(ui, t, "message-square-text", "Comments", comm_active, "View Comments Panel").clicked() {
-            app.right = Some(RightPanel::Comments);
+            run(app, "comment.list");
         }
         if large_ribbon_button(ui, t, "ruler", "Measure", false, "Measure Distance").clicked() {
-            app.run_command("measure.distance");
+            run(app, "measure.distance");
         }
     });
 }
@@ -757,41 +778,53 @@ fn show_view_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
             app.select_mode(Mode::AllTools);
         }
         if large_ribbon_button(ui, t, "book-open", "Read Mode", app.mode == Mode::Read, "Read Mode").clicked() {
-            app.run_command("view.read_mode");
+            run(app, "view.read_mode");
         }
-        if large_ribbon_button(ui, t, "maximize-2", "Full Screen", false, "Full Screen").clicked() {
-            app.run_command("view.full_screen");
+        if large_ribbon_button(ui, t, "maximize", "Full Screen", app.full_screen, "Full Screen").clicked() {
+            run(app, "view.full_screen");
         }
     });
 
     ribbon_group(ui, "Page Display", t, |ui| {
-        if large_ribbon_button(ui, t, "file", "Single Page", false, "Single Page Display").clicked() {
-            app.run_command("view.page_single");
+        use crate::canvas::PageLayout;
+        let fit = app.active.and_then(|i| app.views.get(i)).map(|v| v.fit);
+        let (single, continuous, two_up) = app
+            .active
+            .and_then(|i| app.views.get(i))
+            .map_or((true, true, false), |v| (v.layout == PageLayout::Single, v.continuous(), v.layout == PageLayout::TwoUp));
+        if large_ribbon_button(ui, t, "file-text", "Single Page", single && !continuous && !two_up, "Single Page Display").clicked() {
+            app.set_ribbon_display(PageLayout::Single, false);
         }
-        if large_ribbon_button(ui, t, "scroll", "Continuous", false, "Continuous Scrolling").clicked() {
-            app.run_command("view.page_continuous");
+        if large_ribbon_button(ui, t, "arrow-up-down", "Continuous", continuous && !two_up, "Continuous Scrolling").clicked() {
+            app.set_ribbon_display(PageLayout::Single, true);
         }
-        if large_ribbon_button(ui, t, "columns-2", "Two Pages", false, "Two Pages Facing").clicked() {
-            app.run_command("view.page_facing");
+        if large_ribbon_button(ui, t, "columns-2", "Two Pages", two_up, "Two Pages Facing").clicked() {
+            app.set_ribbon_display(PageLayout::TwoUp, !continuous);
         }
+        if large_ribbon_button(ui, t, "move-horizontal", "Fit Width", fit == Some(Fit::Width), "Fit Width").clicked()
+            && let Some(v) = view(app) {
+                v.set_fit(Fit::Width);
+            }
+        if large_ribbon_button(ui, t, "maximize-2", "Fit Page", fit == Some(Fit::Page), "Fit Page").clicked()
+            && let Some(v) = view(app) {
+                v.set_fit(Fit::Page);
+            }
     });
 
     ribbon_group(ui, "Zoom", t, |ui| {
-        if large_ribbon_button(ui, t, "zoom-in", "Zoom In", false, "Zoom In").clicked() {
-            app.run_command("view.zoom_in");
-        }
-        if large_ribbon_button(ui, t, "zoom-out", "Zoom Out", false, "Zoom Out").clicked() {
-            app.run_command("view.zoom_out");
-        }
-        if large_ribbon_button(ui, t, "move-horizontal", "Fit Width", false, "Fit Width").clicked() {
-            app.run_command("view.fit_width");
-        }
-        if large_ribbon_button(ui, t, "maximize", "Fit Page", false, "Fit Page").clicked() {
-            app.run_command("view.fit_page");
-        }
-        if large_ribbon_button(ui, t, "scan", "Actual Size", false, "100% Actual Size").clicked() {
-            app.run_command("view.actual_size");
-        }
+        let (zoom, fit) = app.active.and_then(|i| app.views.get(i)).map_or((1.0, Fit::None), |v| (v.zoom, v.fit));
+        if large_ribbon_button(ui, t, "zoom-in", "Zoom In", false, "Zoom In").clicked()
+            && let Some(v) = view(app) {
+                v.zoom_step(true);
+            }
+        if large_ribbon_button(ui, t, "zoom-out", "Zoom Out", false, "Zoom Out").clicked()
+            && let Some(v) = view(app) {
+                v.zoom_step(false);
+            }
+        if large_ribbon_button(ui, t, "scan", "Actual Size", (zoom - 1.0).abs() < 0.001 && fit == Fit::None, "100% Actual Size").clicked()
+            && let Some(v) = view(app) {
+                v.set_zoom(1.0);
+            }
     });
 
     ribbon_group(ui, "Panels", t, |ui| {
@@ -814,31 +847,52 @@ fn show_view_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
 fn show_form_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
     ribbon_group(ui, "Form Fields", t, |ui| {
         if large_ribbon_button(ui, t, "text-cursor-input", "Text Field", false, "Add Text Field").clicked() {
-            app.run_command("form.text_field");
+            run(app, "form.add.text");
         }
-        if large_ribbon_button(ui, t, "check-square", "Check Box", false, "Add Check Box").clicked() {
-            app.run_command("form.checkbox");
+        if large_ribbon_button(ui, t, "check-circle-2", "Check Box", false, "Add Check Box").clicked() {
+            run(app, "form.add.checkbox");
         }
         if large_ribbon_button(ui, t, "circle-dot", "Radio Button", false, "Add Radio Button").clicked() {
-            app.run_command("form.radio");
+            run(app, "form.add.radio");
         }
-        if large_ribbon_button(ui, t, "list", "Combo Box", false, "Add Combo Box").clicked() {
-            app.run_command("form.combo_box");
+        if large_ribbon_button(ui, t, "chevron-down", "Drop-down", false, "Add Combo Box").clicked() {
+            run(app, "form.add.combo");
         }
-        if large_ribbon_button(ui, t, "square-play", "Push Button", false, "Add Push Button").clicked() {
-            app.run_command("form.button");
+        if large_ribbon_button(ui, t, "list", "List Box", false, "Add List Box").clicked() {
+            run(app, "form.add.list");
         }
-        if large_ribbon_button(ui, t, "pen-tool", "Signature", false, "Add Digital Signature Field").clicked() {
-            app.run_command("form.signature_field");
+        if large_ribbon_button(ui, t, "square", "Button", false, "Add Push Button").clicked() {
+            run(app, "form.add.button");
+        }
+        if large_ribbon_button(ui, t, "clock-3", "Date Field", false, "Add Date Field").clicked() {
+            run(app, "form.add.date");
+        }
+        if large_ribbon_button(ui, t, "signature", "Signature", false, "Add Digital Signature Field").clicked() {
+            run(app, "form.add.signature");
         }
     });
 
     ribbon_group(ui, "Form Data", t, |ui| {
-        if large_ribbon_button(ui, t, "rotate-ccw", "Reset Form", false, "Reset Form Fields").clicked() {
-            app.run_command("form.reset");
+        if large_ribbon_button(ui, t, "eraser", "Reset Form", false, "Reset Form Fields").clicked() {
+            run(app, "form.clear");
         }
-        if large_ribbon_button(ui, t, "calculator", "Calculation Order", false, "Calculation Order").clicked() {
-            app.left = LeftPanel::CalculationOrder;
+        if large_ribbon_button(ui, t, "list-ordered", "Calculation Order", false, "Calculation Order").clicked() {
+            run(app, "form.calculation_order");
+        }
+        if large_ribbon_button(ui, t, "layers", "Flatten Fields", false, "Flatten form fields").clicked() {
+            run(app, "form.flatten");
+        }
+    });
+
+    ribbon_group(ui, "Data", t, |ui| {
+        if large_ribbon_button(ui, t, "file-input", "Import Data…", false, "Import form data").clicked() {
+            run(app, "form.import_data");
+        }
+        if large_ribbon_button(ui, t, "file-output", "Export Data…", false, "Export form data").clicked() {
+            run(app, "form.export_data");
+        }
+        if large_ribbon_button(ui, t, "scan-text", "Detect Fields", false, "Detect form fields").clicked() {
+            run(app, "form.detect");
         }
     });
 }
@@ -852,31 +906,31 @@ fn show_protect_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
         }
 
         if large_ribbon_button(ui, t, "lock", "Password Protect", app.dialog == Some(Dialog::Protect), "Protect with Password").clicked() {
-            app.dialog = Some(Dialog::Protect);
+            run(app, "protect.password");
         }
-        if large_ribbon_button(ui, t, "unlock", "Remove Security", false, "Remove Document Security").clicked() {
-            unlock_pdf_action(app);
+        if large_ribbon_button(ui, t, "lock-open", "Remove Security", false, "Remove Document Security").clicked() {
+            run(app, "protect.remove");
         }
-        if large_ribbon_button(ui, t, "shield-alert", "Sanitize", false, "Sanitize Hidden Data").clicked() {
-            app.run_command("protect.sanitize");
+        if large_ribbon_button(ui, t, "eye-off", "Sanitize", false, "Sanitize Hidden Data").clicked() {
+            run(app, "redact.sanitize");
         }
     });
 
     ribbon_group(ui, "Redaction", t, |ui| {
-        if large_ribbon_button(ui, t, "eraser", "Mark Redaction", false, "Mark Text/Area for Redaction").clicked() {
-            app.select_tool("redact");
+        if large_ribbon_button(ui, t, "rectangle-horizontal", "Mark Redaction", app.quick_tool == QuickTool::Redact, "Mark Text/Area for Redaction").clicked() {
+            run(app, "redact.mark");
         }
-        if large_ribbon_button(ui, t, "check-check", "Apply Redactions", false, "Permanently Apply Redactions").clicked() {
-            app.run_command("redact.apply");
+        if large_ribbon_button(ui, t, "check", "Apply Redactions", false, "Permanently Apply Redactions").clicked() {
+            run(app, "redact.apply");
         }
     });
 
     ribbon_group(ui, "Digital Signatures", t, |ui| {
-        if large_ribbon_button(ui, t, "pen-tool", "Sign Document", false, "Place Digital Signature").clicked() {
-            app.select_mode(Mode::Sign);
+        if large_ribbon_button(ui, t, "signature", "Sign Document", false, "Place Digital Signature").clicked() {
+            run(app, "sign.digital");
         }
-        if large_ribbon_button(ui, t, "shield-check", "Validate All", false, "Validate All Signatures").clicked() {
-            app.run_command("sign.validate");
+        if large_ribbon_button(ui, t, "badge-check", "Validate All", false, "Validate All Signatures").clicked() {
+            run(app, "sign.validate");
         }
     });
 }
@@ -885,19 +939,37 @@ fn show_protect_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
 fn show_convert_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
     ribbon_group(ui, "Export PDF", t, |ui| {
         if large_ribbon_button(ui, t, "file-text", "To Word", false, "Export to Microsoft Word").clicked() {
-            app.select_tool("export");
+            run(app, "export.docx");
         }
         if large_ribbon_button(ui, t, "file-spreadsheet", "To Excel", false, "Export to Microsoft Excel").clicked() {
-            app.select_tool("export");
+            run(app, "export.rtf");
         }
         if large_ribbon_button(ui, t, "presentation", "To PowerPoint", false, "Export to PowerPoint").clicked() {
-            app.select_tool("export");
+            run(app, "export.pptx");
         }
         if large_ribbon_button(ui, t, "image", "To Image", false, "Export as Images (PNG, JPEG, TIFF)").clicked() {
-            app.select_tool("export");
+            run(app, "export.image");
         }
-        if large_ribbon_button(ui, t, "file-code", "To Text", false, "Export as Plain Text or HTML").clicked() {
-            app.select_tool("export");
+        if large_ribbon_button(ui, t, "type", "To Text", false, "Export as Plain Text").clicked() {
+            run(app, "export.text");
+        }
+        if large_ribbon_button(ui, t, "file-symlink", "To HTML", false, "Export as HTML").clicked() {
+            run(app, "export.html");
+        }
+    });
+
+    ribbon_group(ui, "Create PDF", t, |ui| {
+        if large_ribbon_button(ui, t, "file-input", "From File", false, "Create PDF from a file").clicked() {
+            run(app, "create.file");
+        }
+        if large_ribbon_button(ui, t, "files", "From Several Files", false, "Create PDF from several files").clicked() {
+            run(app, "create.multiple");
+        }
+        if large_ribbon_button(ui, t, "image", "From Images", false, "Create PDF from images").clicked() {
+            run(app, "create.images");
+        }
+        if large_ribbon_button(ui, t, "copy-plus", "From Clipboard", false, "Create PDF from the clipboard").clicked() {
+            run(app, "create.clipboard");
         }
     });
 }
@@ -909,11 +981,29 @@ fn show_sign_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
         if large_ribbon_button(ui, t, "pen-tool", "Fill & Sign", sign_active, "Fill and Sign PDF").clicked() {
             app.select_mode(Mode::Sign);
         }
+        if large_ribbon_button(ui, t, "signature", "Sign", false, "Place a signature").clicked() {
+            run(app, "sign.fill.signature");
+        }
         if large_ribbon_button(ui, t, "type", "Add Initials", false, "Place Initials").clicked() {
-            app.run_command("sign.initials");
+            run(app, "sign.fill.initials");
+        }
+        if large_ribbon_button(ui, t, "check", "Checkmark", false, "Place a checkmark").clicked() {
+            run(app, "sign.fill.check");
+        }
+        if large_ribbon_button(ui, t, "clock-3", "Date", false, "Stamp today's date").clicked() {
+            run(app, "sign.fill.date");
+        }
+    });
+
+    ribbon_group(ui, "Digital ID", t, |ui| {
+        if large_ribbon_button(ui, t, "badge-check", "Digitally Sign", false, "Sign with a Digital ID").clicked() {
+            run(app, "sign.digital");
         }
         if large_ribbon_button(ui, t, "shield-check", "Certify", false, "Certify with Digital ID").clicked() {
-            app.run_command("sign.certify");
+            run(app, "sign.certify");
+        }
+        if large_ribbon_button(ui, t, "signature", "Signatures Panel", app.right == Some(RightPanel::Signatures), "Signatures panel").clicked() {
+            run(app, "sign.panel");
         }
     });
 }
@@ -921,14 +1011,17 @@ fn show_sign_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
 /// --- HELP RIBBON ---
 fn show_help_ribbon(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
     ribbon_group(ui, "Help & Support", t, |ui| {
-        if large_ribbon_button(ui, t, "circle-help", "User Guide", false, "Open User Guide").clicked() {
-            app.dialog = Some(Dialog::About);
+        if large_ribbon_button(ui, t, "circle-help", "Keyboard Shortcuts", false, "Keyboard shortcuts").clicked() {
+            run(app, "help.shortcuts");
         }
-        if large_ribbon_button(ui, t, "rotate-cw", "Check for updates…", false, tl!("Check for updates…")).clicked() {
+        if large_ribbon_button(ui, t, "triangle-alert", "Report an issue", false, tl!("Report an issue")).clicked() {
+            run(app, "help.issues");
+        }
+        if large_ribbon_button(ui, t, "cloud", "Check for updates…", false, tl!("Check for updates…")).clicked() {
             app.check_for_updates();
         }
         if large_ribbon_button(ui, t, "info", "About MK PDF", false, tl!("About MK PDF")).clicked() {
-            app.dialog = Some(Dialog::About);
+            run(app, "help.about");
         }
     });
 

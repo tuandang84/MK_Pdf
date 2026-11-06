@@ -61,6 +61,35 @@ fn harness_sized(width: f32) -> Harness<'static, PdfCraftApp> {
 }
 
 #[test]
+fn every_ribbon_button_names_a_real_command_and_icon() {
+    // A ribbon button that names a command the catalogue doesn't have, or an icon that isn't
+    // embedded, does nothing and shows an empty square: neither can be caught by clicking, so
+    // the source is checked instead.
+    let src = include_str!("../../src/ribbon.rs");
+    let mut dead_commands = Vec::new();
+    for cap in src.split("run(app, \"").skip(1).chain(src.split("run_command(\"").skip(1)) {
+        let id = cap.split('"').next().unwrap_or_default();
+        if pdfcraft_engine::commands::command(id).is_none() {
+            dead_commands.push(id.to_string());
+        }
+    }
+    assert!(dead_commands.is_empty(), "ribbon commands the catalogue doesn't know: {dead_commands:?}");
+
+    let mut missing_icons = Vec::new();
+    for marker in ["large_ribbon_button(ui, t, \"", "small_ribbon_button(ui, t, \"", "icons::button(ui, \""] {
+        for cap in src.split(marker).skip(1) {
+            let icon = cap.split('"').next().unwrap_or_default();
+            if !pdfcraft_ui_egui::icons::exists(icon) {
+                missing_icons.push(icon.to_string());
+            }
+        }
+    }
+    missing_icons.sort();
+    missing_icons.dedup();
+    assert!(missing_icons.is_empty(), "ribbon icons that aren't embedded (they draw an empty square): {missing_icons:?}");
+}
+
+#[test]
 fn the_ribbon_header_never_overlaps_itself_in_a_narrow_window() {
     let wide = harness_sized(1400.0);
     // The mode tabs sit by the ribbon tabs, well left of the search box.
