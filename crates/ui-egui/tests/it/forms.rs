@@ -5,7 +5,17 @@ use egui_kittest::kittest::Queryable;
 use pdfcraft_ui_egui::PdfCraftApp;
 
 fn harness() -> Harness<'static, PdfCraftApp> {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
+    harness_sized(900.0)
+}
+
+/// A taller window: the ribbon's command strip pushes the page down, and a calendar opens below
+/// its field, so the calendar tests need room for both.
+fn tall_harness() -> Harness<'static, PdfCraftApp> {
+    harness_sized(1020.0)
+}
+
+fn harness_sized(height: f32) -> Harness<'static, PdfCraftApp> {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, height)).build_eframe(|_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("form.pdf", None, include_bytes!("../data/form.pdf").to_vec()).unwrap();
@@ -429,7 +439,7 @@ fn dragging_over_another_fields_text_focuses_it_and_selects_from_the_press() {
 #[test]
 fn date_fields_offer_a_calendar() {
     use egui_kittest::kittest::Queryable;
-    let mut h = harness();
+    let mut h = tall_harness();
     h.state_mut().apply_edit(pdfcraft_engine::Edit::AddField {
         page: 0,
         rect: [50.0, 40.0, 200.0, 60.0],
@@ -455,7 +465,7 @@ fn date_fields_offer_a_calendar() {
 #[test]
 fn the_calendar_follows_a_complete_date_typed_while_it_is_open() {
     use egui_kittest::kittest::Queryable;
-    let mut h = harness();
+    let mut h = tall_harness();
     h.state_mut().apply_edit(pdfcraft_engine::Edit::AddField {
         page: 0,
         rect: [50.0, 40.0, 200.0, 60.0],
@@ -488,7 +498,7 @@ fn the_calendar_follows_a_complete_date_typed_while_it_is_open() {
 #[test]
 fn an_undelimited_date_field_takes_a_typed_date_and_its_calendar_opens_on_it() {
     use egui_kittest::kittest::Queryable;
-    let mut h = harness();
+    let mut h = tall_harness();
     h.state_mut().apply_edit(pdfcraft_engine::Edit::AddField {
         page: 0,
         rect: [50.0, 40.0, 200.0, 60.0],
@@ -520,7 +530,7 @@ fn an_undelimited_date_field_takes_a_typed_date_and_its_calendar_opens_on_it() {
 #[test]
 fn the_calendar_picks_today_in_the_fields_format_from_any_month() {
     use egui_kittest::kittest::Queryable;
-    let mut h = harness();
+    let mut h = tall_harness();
     // 2023-11-14 on the injected clock.
     let s = h.state_mut();
     s.session = std::mem::take(&mut s.session).with_clock(|| 1_700_000_000);
@@ -564,7 +574,7 @@ fn the_calendar_picks_today_in_the_fields_format_from_any_month() {
 #[test]
 fn lithuanian_calendar_localizes_months_and_weekdays_without_changing_field_values() {
     use egui_kittest::kittest::Queryable;
-    let mut h = harness();
+    let mut h = tall_harness();
     h.state_mut().set_option("language", "lt").unwrap();
     h.state_mut().apply_edit(pdfcraft_engine::Edit::AddField {
         page: 0,

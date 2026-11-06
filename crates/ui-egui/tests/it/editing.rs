@@ -39,7 +39,7 @@ fn fixture(n: usize) -> Vec<u8> {
 }
 
 fn harness(pages: usize, setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, PdfCraftApp> {
-    let mut builder = Harness::builder().with_size(egui::vec2(1400.0, 900.0));
+    let mut builder = Harness::builder().with_size(egui::vec2(1400.0, 1020.0));
     if std::env::var_os("PDFCRAFT_ORGANIZE_SNAPSHOT").is_some() {
         builder = builder.wgpu();
     }
@@ -4714,7 +4714,7 @@ fn default_page_context_menu_when_not_in_edit_mode() {
 #[test]
 fn page_context_menu_items_disabled_on_protected_pdf() {
     let bytes = protected("", "owner", 0b0100);
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(move |_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("protected.pdf", None, bytes.clone()).expect("opens");
@@ -8397,12 +8397,20 @@ fn mode_tab(h: &Harness<'static, PdfCraftApp>, label: &str) -> egui::Rect {
 /// up under the bar. With the All tools panel closed it lies under Edit, Convert and E-Sign; it
 /// starts right of All tools.
 fn mode_tab_cursors(h: &mut Harness<'static, PdfCraftApp>, text: egui::Rect) -> [(&'static str, egui::CursorIcon); 3] {
-    h.state_mut().views[0].goto = Some((0, 0.5));
+    let page = |h: &Harness<'static, PdfCraftApp>| h.state().views[0].page_screen_rect(0).expect("on screen");
+    // The text's centre below the page's top edge, then scroll the page so it sits on the tabs.
+    let y = text.center().y - page(h).top();
+    let old_top = page(h).top();
+    let tabs = mode_tab(h, "Convert").center().y;
+    h.state_mut().views[0].goto = Some((0, 0.0));
     h.run_steps(4);
-    let offset = h.state().views[0].page_screen_rect(0).expect("on screen").top();
+    let top = page(h).top();
+    h.state_mut().views[0].goto = Some((0, (top - (tabs - y)) / page(h).height()));
+    h.run_steps(4);
+    let under = text.translate(egui::vec2(0.0, page(h).top() - old_top));
     ["Edit", "Convert", "E-Sign"].map(|label| {
         let at = mode_tab(h, label).center();
-        assert!(text.translate(egui::vec2(0.0, offset)).contains(at), "the text lies under {label}");
+        assert!(under.contains(at), "{under:?} lies under {label} at {at:?}");
         h.hover_at(at);
         h.run_steps(2);
         (label, h.output().platform_output.cursor_icon)

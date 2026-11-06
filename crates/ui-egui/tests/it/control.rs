@@ -534,6 +534,9 @@ fn language_switch_preserves_document_and_command_ids() {
         assert_eq!(ok(&mut h, &c, "ui.commands", json!({})), commands);
 
         let lang = i18n::Lang::from_code(code).unwrap();
+        // The compact menu bar is hidden behind the header's Menu button by default.
+        h.state_mut().menu_bar_open = true;
+        h.run_steps(2);
         // A title without an ASCII letter shows its mnemonic after it ("ファイル(F)").
         let file = i18n::tr(lang, "File");
         h.get_by(|n| n.role() == egui::accesskit::Role::MenuItem && n.label().is_some_and(|l| l.starts_with(file))).click();
@@ -1038,6 +1041,8 @@ fn preferences_menu_and_shortcut_allow_switching_interface_languages() {
     ok(&mut h, &c, "ui.set", json!({ "key": "language", "value": "ja" }));
     // The menu bar's Edit menu holds Preferences. Titles and rows carry their mnemonic
     // ("編集(E)", "環境設定(P)…"), so match by the start of the label.
+    h.state_mut().menu_bar_open = true;
+    h.run_steps(2);
     let menu_row = |text: &'static str| {
         move |n: &egui_kittest::kittest::AccessKitNode<'_>| {
             n.role() == egui::accesskit::Role::MenuItem && n.label().is_some_and(|l| l.starts_with(text))

@@ -48,6 +48,39 @@ fn top_toolbar_renders_key_tools_and_unlock_pdf() {
     assert_eq!(h.state().left, pdfcraft_ui_egui::LeftPanel::Tool("combine"));
 }
 
+/// A narrower window: the header drops its mode tabs and shortens the search box so the ribbon
+/// tabs always stay clear of it.
+fn harness_sized(width: f32) -> Harness<'static, PdfCraftApp> {
+    let mut h = Harness::builder().with_size(egui::vec2(width, 1000.0)).build_eframe(|_cc| {
+        let mut app = PdfCraftApp::new();
+        app.set_option("language", "en").unwrap();
+        app
+    });
+    h.run_steps(4);
+    h
+}
+
+#[test]
+fn the_ribbon_header_never_overlaps_itself_in_a_narrow_window() {
+    let wide = harness_sized(1400.0);
+    // The mode tabs sit by the ribbon tabs, well left of the search box.
+    let search = wide.get_by_label_contains("Find").rect();
+    for label in ["Convert", "E-Sign"] {
+        let tab = wide.get_by_label(label).rect();
+        assert!(tab.right() < search.left(), "{label} ends before the search box ({tab:?}, {search:?})");
+    }
+    let narrow = harness_sized(1000.0);
+    // The ribbon tabs stay, and so does the compact Menu. The mode tabs give way first, so
+    // nothing is drawn over them.
+    for label in ["HOME Tab", "ORGANIZE Tab", "COMMENT Tab", "VIEW Tab", "FORM Tab", "PROTECT Tab", "HELP Tab", "Menu"] {
+        narrow.get_by_label(label);
+    }
+    assert!(narrow.query_by_label("E-Sign").is_none(), "the mode tabs stay out of a narrow header");
+    let home = narrow.get_by_label("HOME Tab").rect();
+    let menu = narrow.get_by_label("Menu").rect();
+    assert!(home.right() < menu.left(), "the ribbon tabs clear the Menu button");
+}
+
 #[test]
 fn home_shows_welcome_and_tools() {
     let h = harness(|_| {});

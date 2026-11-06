@@ -270,6 +270,10 @@ pub struct PdfCraftApp {
     pub active: Option<usize>,
     pub ribbon_tab: RibbonTab,
     pub ribbon_collapsed: bool,
+    /// The compact legacy menu (File, Edit, View…) is hidden by default: the ribbon is the
+    /// interface, as in Foxit PhantomPDF. The header's Menu button reveals it for the few
+    /// commands that have no ribbon button.
+    pub menu_bar_open: bool,
     pub mode: Mode,
     /// Workspace used for newly opened PDFs; independent of PDF Initial View metadata.
     pub default_mode: Mode,

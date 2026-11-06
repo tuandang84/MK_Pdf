@@ -40,7 +40,7 @@ fn fixture_at(rotation: u16, cropped: bool, shared: bool, collision: bool) -> Ve
 }
 
 fn harness(bytes: Vec<u8>) -> Harness<'static, PdfCraftApp> {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1000.0)).build_eframe(move |_cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(move |_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.system_clipboard = false;

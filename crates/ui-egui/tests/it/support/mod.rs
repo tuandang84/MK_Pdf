@@ -51,9 +51,17 @@ pub fn wait_until(h: &mut Harness<'static, PdfCraftApp>, what: &str, ready: impl
     );
 }
 
-/// Open the in-window menu bar's `title` menu (File, Edit, View…).
+/// Open the compact menu bar's `title` menu (File, Edit, View…). The bar is hidden behind the
+/// header's Menu button by default; this reveals it first when it isn't already showing.
 pub fn open_menu(h: &mut Harness<'static, PdfCraftApp>, title: &str) {
     use egui_kittest::kittest::Queryable;
+    let shown = |h: &Harness<'static, PdfCraftApp>| {
+        h.query_by(|n| n.role() == egui::accesskit::Role::MenuItem && n.label().as_deref() == Some(title)).is_some()
+    };
+    if !shown(h) {
+        h.state_mut().menu_bar_open = true;
+        h.run_steps(2);
+    }
     h.get_by(|n| n.role() == egui::accesskit::Role::MenuItem && n.label().as_deref() == Some(title)).click();
     h.run_steps(2);
 }

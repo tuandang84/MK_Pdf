@@ -145,7 +145,7 @@ fn button_pdf() -> Vec<u8> {
 /// The app with `pdf` open at `zoom` percent and its first frames run. The left panel stays
 /// open only where a test places the page relative to the window's chrome.
 fn open(pdf: Vec<u8>, zoom: &'static str, left_open: bool) -> Harness<'static, PdfCraftApp> {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(move |_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("test.pdf", None, pdf).unwrap();

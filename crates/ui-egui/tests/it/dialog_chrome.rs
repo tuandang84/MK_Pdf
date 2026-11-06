@@ -232,7 +232,7 @@ fn dialog_buttons_follow_the_content_after_a_taller_tab() {
 
 #[test]
 fn page_hover_cursors_stay_off_while_a_dialog_is_open() {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(|_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("form.pdf", None, include_bytes!("../data/form.pdf").to_vec()).unwrap();

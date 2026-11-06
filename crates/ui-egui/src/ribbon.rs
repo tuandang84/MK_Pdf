@@ -43,57 +43,33 @@ pub fn unlock_pdf_action(app: &mut PdfCraftApp) {
 /// Top Quick Access Toolbar & Title bar (integrated into tab strip)
 pub fn quick_access_bar(_app: &mut PdfCraftApp, _ui: &mut egui::Ui) {}
 
-/// Ribbon Tabs Header bar (Plum FILE button + HOME, EDIT, ORGANIZE, COMMENT, VIEW, FORM, PROTECT, HELP, etc.).
+/// The ribbon header row: Foxit's plum FILE tab, the quick access toolbar, the workspace (mode)
+/// tabs, and the ribbon tabs themselves. There is deliberately no legacy menu bar: Foxit
+/// PhantomPDF has none either, and every menu command is reachable from the ribbon, the FILE
+/// home screen or the command palette.
+pub const HEADER_HEIGHT: f32 = 36.0;
+/// The grouped command strip below the header, at Foxit PhantomPDF's height.
+pub const RIBBON_HEIGHT: f32 = 104.0;
+
 pub fn ribbon_header(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
 
     egui::Panel::top("ribbon_header")
-        .exact_size(24.0)
+        .exact_size(HEADER_HEIGHT)
         .frame(
             egui::Frame::NONE
                 .fill(if t.dark() { t.chrome } else { Color32::from_rgb(243, 243, 246) })
-                .inner_margin(egui::Margin { left: 8, right: 8, top: 0, bottom: 0 })
+                .inner_margin(egui::Margin { left: 0, right: 8, top: 0, bottom: 0 })
                 .stroke(Stroke::new(1.0, t.divider)),
         )
         .show(ui, |ui| {
             ui.horizontal_centered(|ui| {
-                ui.spacing_mut().item_spacing.x = 1.0;
+                ui.spacing_mut().item_spacing.x = 2.0;
+                // The header never overlaps itself: in a narrow window the mode tabs give way
+                // first, then the search box shortens, then it goes. The ribbon tabs always stay.
+                let width = ui.available_width();
 
-                // In-window menu bar (File, Edit, View...), if native menu is not present
-                if app.native_menu.is_none() {
-                    app.menu_bar_ui(ui);
-                    ui.add_space(3.0);
-                    ui.painter().vline(ui.cursor().left(), ui.max_rect().y_range().shrink(6.0), Stroke::new(1.0, t.divider));
-                    ui.add_space(3.0);
-                }
-
-                // 1. Mode tabs (All tools, Edit, Convert, E-Sign)
-                let aux_tabs = [
-                    (tl!("All tools"), app.mode == Mode::AllTools && app.ribbon_tab != RibbonTab::Edit, Mode::AllTools),
-                    (tl!("Edit"), app.mode == Mode::Edit || app.ribbon_tab == RibbonTab::Edit, Mode::Edit),
-                    (tl!("Convert"), app.mode == Mode::Convert || app.ribbon_tab == RibbonTab::Convert, Mode::Convert),
-                    (tl!("E-Sign"), app.mode == Mode::Sign || app.ribbon_tab == RibbonTab::Sign, Mode::Sign),
-                ];
-
-                for (label, active, mode) in aux_tabs {
-                    let resp = render_mode_tab_button(ui, &t, label, active);
-                    if resp.clicked() {
-                        app.switch_mode(mode, true);
-                        if mode == Mode::Edit {
-                            app.ribbon_tab = RibbonTab::Edit;
-                        } else if mode == Mode::Convert {
-                            app.ribbon_tab = RibbonTab::Convert;
-                        } else if mode == Mode::Sign {
-                            app.ribbon_tab = RibbonTab::Sign;
-                        }
-                    }
-                }
-
-                ui.add_space(3.0);
-                ui.painter().vline(ui.cursor().left(), ui.max_rect().y_range().shrink(6.0), Stroke::new(1.0, t.divider));
-                ui.add_space(3.0);
-
-                // 2. Iconic Foxit Plum FILE Button
+                // 1. Iconic Foxit Plum FILE Button, flush with the left edge.
                 let file_active = app.active.is_none();
                 let file_btn = render_file_tab_button(ui, file_active);
                 if file_btn.clicked() {
@@ -102,89 +78,144 @@ pub fn ribbon_header(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                     app.combine_tab.focused = false;
                 }
 
-                // 3. Ribbon Tabs (HOME, ORGANIZE, COMMENT, VIEW, FORM, PROTECT, HELP)
-                let tabs: [(RibbonTab, &str); 7] = [
-                    (RibbonTab::Home, "HOME"),
-                    (RibbonTab::Organize, "ORGANIZE"),
-                    (RibbonTab::Comment, "COMMENT"),
-                    (RibbonTab::View, "VIEW"),
-                    (RibbonTab::Form, "FORM"),
-                    (RibbonTab::Protect, "PROTECT"),
-                    (RibbonTab::Help, "HELP"),
-                ];
+                // 2. Quick Access Toolbar
+                ui.add_space(4.0);
+                let qat_size = 26.0;
+                let save_tip = crate::commands::command_tip(ui.ctx(), tl!("Save ({key})"), "file.save");
+                if icons::button(ui, "save", qat_size, false, &save_tip).clicked() {
+                    app.run_command("file.save");
+                }
+                let has_doc = app.active.is_some();
+                let may_print = !has_doc || pdfcraft_engine::commands::command("print.dialog").is_some_and(|c| app.command_enabled(c));
+                let print_tip = crate::commands::command_tip(ui.ctx(), tl!("Print ({key})"), "print.dialog");
+                let mut print = ui
+                    .add_enabled_ui(has_doc && may_print, |ui| icons::button(ui, "printer", qat_size, false, &print_tip))
+                    .inner;
+                if has_doc && !may_print {
+                    print = print.on_disabled_hover_text(crate::print_refused());
+                }
+                if print.clicked() {
+                    app.run_command("print.dialog");
+                }
+                let undo_tip = crate::commands::command_tip(ui.ctx(), tl!("Undo ({key})"), "app.undo");
+                if icons::button(ui, "undo-2", qat_size, false, &undo_tip).clicked() {
+                    app.run_command("app.undo");
+                }
+                let redo_tip = crate::commands::command_tip(ui.ctx(), tl!("Redo ({key})"), "app.redo");
+                if icons::button(ui, "redo-2", qat_size, false, &redo_tip).clicked() {
+                    app.run_command("app.redo");
+                }
+                let unlock_tip = tl!("Unlock PDF - Remove restrictions and passwords without entering password");
+                if icons::button(ui, "lock-open", qat_size, false, unlock_tip).clicked() {
+                    unlock_pdf_action(app);
+                }
 
-                for (tab, display_label) in tabs {
-                    let active = app.ribbon_tab == tab && app.mode != Mode::Edit && app.mode != Mode::Convert && app.mode != Mode::Sign;
-                    let resp = render_ribbon_tab_button(ui, &t, display_label, active);
-                    if resp.clicked() {
-                        app.ribbon_tab = tab;
-                        if tab == RibbonTab::Home && app.mode == Mode::Read {
-                            app.select_mode(Mode::AllTools);
+                // 3. Workspace mode tabs (All tools, Edit, Convert, E-Sign), while they fit beside
+                // the ribbon tabs and the quick access bar's right-hand end.
+                if width >= 1180.0 {
+                    ribbon_separator(ui, &t);
+                    let aux_tabs = [
+                        (tl!("All tools"), app.mode == Mode::AllTools && app.ribbon_tab != RibbonTab::Edit, Mode::AllTools),
+                        (tl!("Edit"), app.mode == Mode::Edit, Mode::Edit),
+                        (tl!("Convert"), app.mode == Mode::Convert, Mode::Convert),
+                        (tl!("E-Sign"), app.mode == Mode::Sign, Mode::Sign),
+                    ];
+
+                    for (label, active, mode) in aux_tabs {
+                        if render_mode_tab_button(ui, &t, label, active).clicked() {
+                            app.switch_mode(mode, true);
+                            app.ribbon_tab = match mode {
+                                Mode::Edit => RibbonTab::Edit,
+                                Mode::Convert => RibbonTab::Convert,
+                                Mode::Sign => RibbonTab::Sign,
+                                _ => RibbonTab::Home,
+                            };
                         }
                     }
                 }
 
-                // 4. Far right: QAT actions (Save, Print, Undo, Redo, Unlock PDF), Search, and Ribbon collapse
+                // 4. Ribbon Tabs (HOME, ORGANIZE, COMMENT, VIEW, FORM, PROTECT, HELP)
+                ribbon_separator(ui, &t);
+                let tabs: [(RibbonTab, &str, Mode); 7] = [
+                    (RibbonTab::Home, "HOME", Mode::AllTools),
+                    (RibbonTab::Organize, "ORGANIZE", Mode::AllTools),
+                    (RibbonTab::Comment, "COMMENT", Mode::AllTools),
+                    (RibbonTab::View, "VIEW", Mode::AllTools),
+                    (RibbonTab::Form, "FORM", Mode::AllTools),
+                    (RibbonTab::Protect, "PROTECT", Mode::AllTools),
+                    (RibbonTab::Help, "HELP", Mode::AllTools),
+                ];
+
+                for (tab, display_label, mode) in tabs {
+                    let active = app.ribbon_tab == tab && app.mode != Mode::Edit && app.mode != Mode::Convert && app.mode != Mode::Sign;
+                    if render_ribbon_tab_button(ui, &t, display_label, active).clicked() {
+                        app.ribbon_tab = tab;
+                        if app.mode != mode && !(tab == RibbonTab::Home && app.mode == Mode::Read) {
+                            app.select_mode(mode);
+                        }
+                    }
+                }
+
+                // 5. Far right: Search, the compact menu and the ribbon collapse toggle.
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     let collapse_icon = if app.ribbon_collapsed { "chevron-down" } else { "chevron-up" };
                     let collapse_tip = if app.ribbon_collapsed { tl!("Expand ribbon") } else { tl!("Collapse ribbon") };
-                    if icons::button(ui, collapse_icon, 24.0, false, collapse_tip).clicked() {
+                    if icons::button(ui, collapse_icon, 26.0, false, collapse_tip).clicked() {
                         app.ribbon_collapsed = !app.ribbon_collapsed;
                     }
-                    if super::widgets::search_box(ui, tl!("Find"), 110.0).clicked() {
+                    if icons::button(ui, "align-justify", 26.0, app.menu_bar_open, tl!("Menu")).clicked() {
+                        app.menu_bar_open = !app.menu_bar_open;
+                    }
+                    let search_width = if width >= 1300.0 { 190.0 } else if width >= 1100.0 { 130.0 } else { 0.0 };
+                    if search_width > 0.0 && super::widgets::search_box(ui, tl!("Find"), search_width).clicked() {
                         app.palette_open = true;
-                    }
-
-                    ui.add_space(2.0);
-                    ui.painter().vline(ui.cursor().left(), ui.max_rect().y_range().shrink(6.0), Stroke::new(1.0, t.divider));
-                    ui.add_space(2.0);
-
-                    // Quick Access Toolbar (rendered right-to-left: Unlock PDF, Redo, Undo, Print, Save)
-                    let qat_size = 20.0;
-                    let unlock_tip = tl!("Unlock PDF - Remove restrictions and passwords without entering password");
-                    if icons::button(ui, "lock-open", qat_size, false, unlock_tip).clicked() {
-                        unlock_pdf_action(app);
-                    }
-                    let redo_tip = crate::commands::command_tip(ui.ctx(), tl!("Redo ({key})"), "app.redo");
-                    if icons::button(ui, "redo-2", qat_size, false, &redo_tip).clicked() {
-                        app.run_command("app.redo");
-                    }
-                    let undo_tip = crate::commands::command_tip(ui.ctx(), tl!("Undo ({key})"), "app.undo");
-                    if icons::button(ui, "undo-2", qat_size, false, &undo_tip).clicked() {
-                        app.run_command("app.undo");
-                    }
-                    let has_doc = app.active.is_some();
-                    let may_print = !has_doc || pdfcraft_engine::commands::command("print.dialog").is_some_and(|c| app.command_enabled(c));
-                    let print_tip = crate::commands::command_tip(ui.ctx(), tl!("Print ({key})"), "print.dialog");
-                    let mut print = ui.add_enabled_ui(has_doc && may_print, |ui| icons::button(ui, "printer", qat_size, false, &print_tip)).inner;
-                    if has_doc && !may_print {
-                        print = print.on_disabled_hover_text(crate::print_refused());
-                    }
-                    if print.clicked() {
-                        app.run_command("print.dialog");
-                    }
-                    let save_tip = crate::commands::command_tip(ui.ctx(), tl!("Save ({key})"), "file.save");
-                    if icons::button(ui, "save", qat_size, false, &save_tip).clicked() {
-                        app.run_command("file.save");
                     }
                 });
             });
         });
 }
 
+/// A thin divider between the header's groups.
+fn ribbon_separator(ui: &mut egui::Ui, t: &Tokens) {
+    ui.add_space(4.0);
+    ui.painter().vline(ui.cursor().left(), ui.max_rect().y_range().shrink(8.0), Stroke::new(1.0, t.divider));
+    ui.add_space(4.0);
+}
+
+/// The compact legacy menu (File, Edit, View…), hidden until the header's Menu button asks for it.
+/// The ribbon carries the everyday commands; this keeps the few that have no ribbon home within
+/// reach without putting a second menu bar on screen by default.
+pub fn legacy_menu_bar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
+    let t = Tokens::get(ui.ctx());
+    egui::Panel::top("legacy_menu_bar")
+        .exact_size(28.0)
+        .frame(
+            egui::Frame::NONE
+                .fill(if t.dark() { t.chrome } else { Color32::from_rgb(243, 243, 246) })
+                .inner_margin(egui::Margin { left: 8, right: 8, top: 0, bottom: 0 })
+                .stroke(Stroke::new(1.0, t.divider)),
+        )
+        .show(ui, |ui| {
+            ui.horizontal_centered(|ui| {
+                ui.spacing_mut().item_spacing.x = 2.0;
+                app.menu_bar_ui(ui);
+            });
+        });
+}
+
 /// The Plum Foxit "FILE" button.
 fn render_file_tab_button(ui: &mut egui::Ui, active: bool) -> egui::Response {
-    let height = 24.0;
-    let width = 50.0;
+    let height = HEADER_HEIGHT;
+    let width = 66.0;
     let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Tab, true, active, "FILE"));
     let press = theme::Press::track(ui, &resp);
 
     let bg = press.fill(FOXIT_PLUM, FOXIT_PLUM_HOVER, FOXIT_PLUM_ACTIVE);
 
-    ui.painter().rect_filled(rect, CornerRadius { nw: 4, ne: 4, sw: 0, se: 0 }, bg);
+    ui.painter().rect_filled(rect, CornerRadius { nw: 5, ne: 5, sw: 0, se: 0 }, bg);
 
-    let text_galley = ui.fonts_mut(|f| f.layout_no_wrap("FILE".to_string(), theme::semibold(11.5), Color32::WHITE));
+    let text_galley = ui.fonts_mut(|f| f.layout_no_wrap("FILE".to_string(), theme::semibold(13.0), Color32::WHITE));
     let text_pos = egui::pos2(
         rect.center().x - text_galley.size().x / 2.0,
         rect.center().y - text_galley.size().y / 2.0,
@@ -201,7 +232,7 @@ fn render_ribbon_tab_button(
     display_label: &str,
     active: bool,
 ) -> egui::Response {
-    let font = if active { theme::semibold(11.0) } else { theme::medium(11.0) };
+    let font = if active { theme::semibold(12.5) } else { theme::medium(12.5) };
     let text_color = if active {
         if t.dark() { t.accent_text } else { FOXIT_PLUM }
     } else {
@@ -209,8 +240,8 @@ fn render_ribbon_tab_button(
     };
 
     let galley = ui.fonts_mut(|f| f.layout_no_wrap(display_label.to_string(), font, text_color));
-    let width = galley.size().x + 16.0;
-    let height = 24.0;
+    let width = galley.size().x + 24.0;
+    let height = HEADER_HEIGHT;
 
     let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
     let tab_widget_label = format!("{display_label} Tab");
@@ -219,14 +250,14 @@ fn render_ribbon_tab_button(
 
     if active {
         let ribbon_bg = if t.dark() { t.panel } else { Color32::WHITE };
-        ui.painter().rect_filled(rect, CornerRadius { nw: 4, ne: 4, sw: 0, se: 0 }, ribbon_bg);
+        ui.painter().rect_filled(rect, CornerRadius { nw: 5, ne: 5, sw: 0, se: 0 }, ribbon_bg);
         // Border on top, left, right to seamlessly join with the ribbon strip below
         let border_stroke = Stroke::new(1.0, if t.dark() { t.divider } else { Color32::from_rgb(205, 205, 210) });
         ui.painter().line_segment([rect.left_top(), rect.right_top()], border_stroke);
         ui.painter().line_segment([rect.left_top(), rect.left_bottom()], border_stroke);
         ui.painter().line_segment([rect.right_top(), rect.right_bottom()], border_stroke);
     } else if resp.hovered() {
-        press.wash(ui, rect, 4, false);
+        press.wash(ui, rect, 5, false);
     }
 
     let pos = egui::pos2(
@@ -245,10 +276,10 @@ fn render_mode_tab_button(
     label: &str,
     active: bool,
 ) -> egui::Response {
-    let font = if active { theme::semibold(11.0) } else { theme::medium(11.0) };
+    let font = if active { theme::semibold(12.5) } else { theme::medium(12.5) };
     let galley = ui.fonts_mut(|f| f.layout_no_wrap(label.to_string(), font, if active { t.text } else { t.text_muted }));
-    let width = galley.size().x + 16.0;
-    let height = 24.0;
+    let width = galley.size().x + 18.0;
+    let height = 30.0;
 
     let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), active, label));
@@ -274,16 +305,16 @@ fn render_mode_tab_button(
     theme::hand(resp)
 }
 
-/// The Foxit PhantomPDF Grouped Command Strip (compact height ~36px).
+/// The Foxit PhantomPDF Grouped Command Strip.
 pub fn ribbon_command_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
 
     egui::Panel::top("ribbon_strip")
-        .exact_size(36.0)
+        .exact_size(RIBBON_HEIGHT)
         .frame(
             egui::Frame::NONE
                 .fill(if t.dark() { t.panel } else { Color32::WHITE })
-                .inner_margin(egui::Margin { left: 8, right: 8, top: 1, bottom: 1 })
+                .inner_margin(egui::Margin { left: 8, right: 8, top: 4, bottom: 2 })
                 .stroke(Stroke::new(1.0, t.divider)),
         )
         .show(ui, |ui| {
@@ -316,7 +347,7 @@ fn ribbon_group<R>(
     let start_x = ui.cursor().left();
     let res = ui.vertical(|ui| {
         let r = ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing = vec2(3.0, 0.0);
+            ui.spacing_mut().item_spacing = vec2(4.0, 0.0);
             add_contents(ui)
         }).inner;
         let end_x = ui.cursor().left();
@@ -324,22 +355,22 @@ fn ribbon_group<R>(
         let title_galley = ui.fonts_mut(|f| {
             f.layout_no_wrap(
                 tl!(title).to_string(),
-                theme::regular(8.5),
+                theme::regular(10.5),
                 if t.dark() { t.text_muted } else { Color32::from_rgb(125, 125, 135) },
             )
         });
         let label_pos = egui::pos2(
             start_x + (group_w - title_galley.size().x).max(0.0) / 2.0,
-            ui.cursor().top(),
+            ui.cursor().top() + 1.0,
         );
         ui.painter().galley(label_pos, title_galley, if t.dark() { t.text_muted } else { Color32::from_rgb(125, 125, 135) });
         r
     }).inner;
 
-    let divider_x = ui.cursor().left() + 4.0;
-    let divider_y = ui.max_rect().y_range().shrink(2.0);
+    let divider_x = ui.cursor().left() + 6.0;
+    let divider_y = ui.max_rect().y_range().shrink(4.0);
     ui.painter().vline(divider_x, divider_y, Stroke::new(1.0, t.divider));
-    ui.add_space(6.0);
+    ui.add_space(12.0);
 
     res
 }
@@ -353,13 +384,100 @@ pub fn large_ribbon_button(
     active: bool,
     tooltip: &str,
 ) -> egui::Response {
-    let font = if active { theme::semibold(9.0) } else { theme::medium(9.0) };
+    let font = if active { theme::semibold(11.5) } else { theme::medium(11.5) };
     let text = tl!(label);
     let galley = ui.fonts_mut(|f| {
         f.layout_no_wrap(text.to_string(), font, if active { t.accent_text } else { t.text })
     });
-    let width = (galley.size().x + 8.0).max(32.0);
-    let height = 23.0;
+    let width = (galley.size().x + 16.0).max(62.0);
+    let height = 72.0;
+
+    let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
+    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, active, text));
+    let press = theme::Press::track(ui, &resp);
+
+    if active {
+        ui.painter().rect(
+            rect,
+            CornerRadius::same(4),
+            if t.dark() { t.hover } else { FOXIT_PLUM_LIGHT },
+            Stroke::new(1.0, FOXIT_PLUM),
+            egui::StrokeKind::Inside,
+        );
+    } else {
+        press.wash(ui, rect, 4, false);
+    }
+
+    let body = rect.translate(press.offset());
+    let icon_color = if active { FOXIT_PLUM } else { t.icon };
+    icons::paint(ui, Rect::from_center_size(body.center_top() + vec2(0.0, 22.0), vec2(28.0, 28.0)), icon, 28.0, icon_color);
+
+    let text_pos = egui::pos2(
+        body.center().x - galley.size().x / 2.0,
+        body.bottom() - galley.size().y - 6.0,
+    );
+    ui.painter().galley(text_pos, galley, if active { FOXIT_PLUM } else { t.text });
+
+    let resp = theme::hand(resp);
+    if tooltip.is_empty() { resp } else { resp.on_hover_text(tooltip) }
+}
+
+/// Prominent "Unlock PDF" button (highlighted with plum accent).
+pub fn unlock_ribbon_button(
+    ui: &mut egui::Ui,
+    _t: &Tokens,
+    active: bool,
+    tooltip: &str,
+) -> egui::Response {
+    let font = theme::semibold(11.5);
+    let text = tl!("Unlock PDF");
+    let galley = ui.fonts_mut(|f| f.layout_no_wrap(text.to_string(), font, Color32::WHITE));
+    let width = (galley.size().x + 18.0).max(70.0);
+    let height = 72.0;
+
+    let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
+    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::MenuItem, ui.is_enabled(), active, text));
+    let press = theme::Press::track(ui, &resp);
+
+    let fill_color = press.fill(FOXIT_PLUM, FOXIT_PLUM_HOVER, FOXIT_PLUM_ACTIVE);
+
+    ui.painter().rect(
+        rect,
+        CornerRadius::same(4),
+        fill_color,
+        Stroke::new(1.0, FOXIT_PLUM_HOVER),
+        egui::StrokeKind::Inside,
+    );
+
+    let body = rect.translate(press.offset());
+    icons::paint(ui, Rect::from_center_size(body.center_top() + vec2(0.0, 22.0), vec2(28.0, 28.0)), "lock-open", 28.0, Color32::WHITE);
+
+    let text_pos = egui::pos2(
+        body.center().x - galley.size().x / 2.0,
+        body.bottom() - galley.size().y - 6.0,
+    );
+    ui.painter().galley(text_pos, galley, Color32::WHITE);
+
+    let resp = theme::hand(resp);
+    if tooltip.is_empty() { resp } else { resp.on_hover_text(tooltip) }
+}
+
+/// Compact Ribbon Button (icon on left, label on right).
+pub fn small_ribbon_button(
+    ui: &mut egui::Ui,
+    t: &Tokens,
+    icon: &str,
+    label: &str,
+    active: bool,
+    tooltip: &str,
+) -> egui::Response {
+    let font = if active { theme::semibold(11.5) } else { theme::medium(11.5) };
+    let text = tl!(label);
+    let galley = ui.fonts_mut(|f| {
+        f.layout_no_wrap(text.to_string(), font, if active { t.accent_text } else { t.text })
+    });
+    let width = (galley.size().x + 24.0).max(60.0);
+    let height = 24.0;
 
     let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, active, text));
@@ -379,97 +497,10 @@ pub fn large_ribbon_button(
 
     let body = rect.translate(press.offset());
     let icon_color = if active { FOXIT_PLUM } else { t.icon };
-    icons::paint(ui, Rect::from_center_size(body.center_top() + vec2(0.0, 6.0), vec2(12.0, 12.0)), icon, 12.0, icon_color);
+    icons::paint(ui, Rect::from_min_size(body.left_top() + vec2(2.0, 5.0), vec2(14.0, 14.0)), icon, 14.0, icon_color);
 
     let text_pos = egui::pos2(
-        body.center().x - galley.size().x / 2.0,
-        body.bottom() - galley.size().y - 1.0,
-    );
-    ui.painter().galley(text_pos, galley, if active { FOXIT_PLUM } else { t.text });
-
-    let resp = theme::hand(resp);
-    if tooltip.is_empty() { resp } else { resp.on_hover_text(tooltip) }
-}
-
-/// Prominent "Unlock PDF" button (highlighted with plum accent).
-pub fn unlock_ribbon_button(
-    ui: &mut egui::Ui,
-    _t: &Tokens,
-    active: bool,
-    tooltip: &str,
-) -> egui::Response {
-    let font = theme::semibold(9.0);
-    let text = tl!("Unlock PDF");
-    let galley = ui.fonts_mut(|f| f.layout_no_wrap(text.to_string(), font, Color32::WHITE));
-    let width = (galley.size().x + 10.0).max(38.0);
-    let height = 23.0;
-
-    let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
-    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::MenuItem, ui.is_enabled(), active, text));
-    let press = theme::Press::track(ui, &resp);
-
-    let fill_color = press.fill(FOXIT_PLUM, FOXIT_PLUM_HOVER, FOXIT_PLUM_ACTIVE);
-
-    ui.painter().rect(
-        rect,
-        CornerRadius::same(3),
-        fill_color,
-        Stroke::new(1.0, FOXIT_PLUM_HOVER),
-        egui::StrokeKind::Inside,
-    );
-
-    let body = rect.translate(press.offset());
-    icons::paint(ui, Rect::from_center_size(body.center_top() + vec2(0.0, 6.0), vec2(12.0, 12.0)), "lock-open", 12.0, Color32::WHITE);
-
-    let text_pos = egui::pos2(
-        body.center().x - galley.size().x / 2.0,
-        body.bottom() - galley.size().y - 1.0,
-    );
-    ui.painter().galley(text_pos, galley, Color32::WHITE);
-
-    let resp = theme::hand(resp);
-    if tooltip.is_empty() { resp } else { resp.on_hover_text(tooltip) }
-}
-
-/// Compact Ribbon Button (icon on left, label on right, 11px height).
-pub fn small_ribbon_button(
-    ui: &mut egui::Ui,
-    t: &Tokens,
-    icon: &str,
-    label: &str,
-    active: bool,
-    tooltip: &str,
-) -> egui::Response {
-    let font = if active { theme::semibold(9.0) } else { theme::medium(9.0) };
-    let text = tl!(label);
-    let galley = ui.fonts_mut(|f| {
-        f.layout_no_wrap(text.to_string(), font, if active { t.accent_text } else { t.text })
-    });
-    let width = galley.size().x + 16.0;
-    let height = 11.0;
-
-    let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
-    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, active, text));
-    let press = theme::Press::track(ui, &resp);
-
-    if active {
-        ui.painter().rect(
-            rect,
-            CornerRadius::same(2),
-            if t.dark() { t.hover } else { FOXIT_PLUM_LIGHT },
-            Stroke::new(1.0, FOXIT_PLUM),
-            egui::StrokeKind::Inside,
-        );
-    } else {
-        press.wash(ui, rect, 2, false);
-    }
-
-    let body = rect.translate(press.offset());
-    let icon_color = if active { FOXIT_PLUM } else { t.icon };
-    icons::paint(ui, Rect::from_min_size(body.left_top() + vec2(1.0, 0.5), vec2(10.0, 10.0)), icon, 10.0, icon_color);
-
-    let text_pos = egui::pos2(
-        body.left() + 13.0,
+        body.left() + 21.0,
         body.center().y - galley.size().y / 2.0,
     );
     ui.painter().galley(text_pos, galley, if active { FOXIT_PLUM } else { t.text });

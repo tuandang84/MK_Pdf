@@ -261,7 +261,7 @@ trailer << /Root 1 0 R >>
 
 #[test]
 fn checker_shows_a_figure_finding_on_its_page() {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(move |_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("figures.pdf", None, FIGURES.to_vec()).unwrap();
@@ -391,7 +391,7 @@ fn tags_panel_marks_a_leaf_tag_as_an_artifact() {
 
 #[test]
 fn checker_finding_opens_its_structure_tag() {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(move |_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("figures.pdf", None, FIGURES.to_vec()).unwrap();

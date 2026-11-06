@@ -32,7 +32,7 @@ fn fixture(n: usize) -> Vec<u8> {
 }
 
 fn harness() -> Harness<'static, PdfCraftApp> {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(|_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("a.pdf", None, fixture(5)).unwrap();
@@ -1595,7 +1595,7 @@ fn page_down_steps_every_spread_when_several_fit_on_screen() {
 /// Open `sizes` in Fit width, continuous, with the Pages panel showing.
 fn pages_panel_harness(sizes: &[(u32, u32)]) -> Harness<'static, PdfCraftApp> {
     let bytes = sized_fixture(sizes);
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(move |_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("cheques.pdf", None, bytes).unwrap();
@@ -1983,7 +1983,7 @@ fn a_picture_inside_form_artwork_under_text_is_selected_and_copied() {
         pdf.extend_from_slice(format!("{o:010} 00000 n \n").as_bytes());
     }
     pdf.extend_from_slice(format!("trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n", objs.len() + 1).as_bytes());
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(move |_cc| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("scan.pdf", None, pdf).unwrap();

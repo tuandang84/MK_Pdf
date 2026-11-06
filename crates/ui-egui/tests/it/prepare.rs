@@ -13,7 +13,7 @@ fn harness() -> Harness<'static, PdfCraftApp> {
 }
 
 fn harness_with(name: &'static str, bytes: Vec<u8>) -> Harness<'static, PdfCraftApp> {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |cc| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(move |cc| {
         cc.egui_ctx.options_mut(|options| options.warn_on_id_clash = true);
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
@@ -910,16 +910,16 @@ fn actions_tab_shows_a_chain_and_keeps_it_when_the_first_action_is_replaced() {
     };
     open(&mut h);
     h.get_by_label("Run a JavaScript, then 1 more action");
-    // The menu bar's Edit menu and the Edit tab come first; the rows' follow (Mouse Up, On Blur).
-    assert_eq!(h.get_all_by_label("Edit").count(), 4);
-    h.get_all_by_label("Edit").nth(2).unwrap().click();
+    // The header's Edit mode tab comes first; the rows' Edit follow (Mouse Up, On Blur).
+    assert_eq!(h.get_all_by_label("Edit").count(), 3);
+    h.get_all_by_label("Edit").nth(1).unwrap().click();
     h.run_steps(2);
     assert_eq!(h.state().field_props.as_ref().unwrap().editing, Some(FieldTrigger::MouseUp));
     // While one script is open, no other Edit can overwrite it.
-    assert!(h.get_all_by_label("Edit").skip(2).all(|n| n.accesskit_node().is_disabled()));
+    assert!(h.get_all_by_label("Edit").skip(1).all(|n| n.accesskit_node().is_disabled()));
     h.get_by_label("Discard").click();
     h.run_steps(2);
-    assert!(h.get_all_by_label("Edit").skip(2).all(|n| !n.accesskit_node().is_disabled()));
+    assert!(h.get_all_by_label("Edit").skip(1).all(|n| !n.accesskit_node().is_disabled()));
     // Replace the Mouse Up script with a link: the chained link stays after it.
     {
         let d = h.state_mut().field_props.as_mut().unwrap();
@@ -1420,7 +1420,7 @@ fn fields_sharing_a_name_each_show_their_own_formula() {
         bytes.extend_from_slice(format!("{o:010} 00000 n \n").as_bytes());
     }
     bytes.extend_from_slice(format!("trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n", objs.len() + 1).as_bytes());
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_| {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1020.0)).build_eframe(move |_| {
         let mut app = PdfCraftApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("dup.pdf", None, bytes.clone()).unwrap();

@@ -71,6 +71,7 @@ impl PdfCraftApp {
             active: None,
             ribbon_tab: crate::RibbonTab::Home,
             ribbon_collapsed: false,
+            menu_bar_open: false,
             mode: Mode::AllTools,
             default_mode: Mode::AllTools,
             view_defaults: Default::default(),
@@ -669,6 +670,9 @@ impl eframe::App for PdfCraftApp {
         let show_ribbon = !self.ribbon_collapsed && !self.all_tools_full && !is_short;
         chrome::tab_strip(self, ui);
         ribbon::ribbon_header(self, ui);
+        if self.menu_bar_open {
+            ribbon::legacy_menu_bar(self, ui);
+        }
         if show_ribbon {
             ribbon::ribbon_command_strip(self, ui);
         }
