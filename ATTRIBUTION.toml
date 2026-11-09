@@ -2791,7 +2791,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "LICENSE-MIT"
 kind = "logo"
 usage = "Brand mark beside the community list in the About dialog and on the Home screen, and in the README. Contributor-original artwork: a red tile with raised cream PDF letters. Wraps the PNG below so the UI can rasterise it at any size."
-sha256 = "f6f5a50c7a04e45cad8ffaccad8465fbdacbc580e71e18db06478003e5f8af97"
+sha256 = "cf7e3277f8aa4102278a0eee865034f5553fd528c6aa1bf18e204c4f784904b2"
 
 [[asset]]
 path = "assets/brand/mk-pdf-logo.png"
@@ -2801,8 +2801,8 @@ source = "Contributor-original (provided by the project owner, 2026-11-10: red t
 licence = "MIT OR Apache-2.0"
 licence_file = "LICENSE-MIT"
 kind = "logo"
-usage = "The 1024 px master of the mark above: the README renders it, and packaging/icons.sh renders every app icon from it. Contributor-original; PDF is set in Arial Black on the creator's system fonts."
-sha256 = "ede97fbc1a6d677ac372e8ae30069c5da073dd11bee77dab9ec49dbe574f374d"
+usage = "The 1024 px master of the mark above: the README renders it, and packaging/icons.sh renders every app icon from it. Contributor-original; PDF is set in the creator's clay lettering (owner file new-logo.png)."
+sha256 = "3a86cd32b9f950ddde6da47a42220a8cdfdc93a87d0670bc59af7b262b60bd42"
 
 [[asset]]
 path = "new-logo.png"
@@ -2812,8 +2812,8 @@ source = "Contributor-original (recreated from the project owner's reference ima
 licence = "MIT OR Apache-2.0"
 licence_file = "LICENSE-MIT"
 kind = "logo"
-usage = "Source recreation of the new app mark, from which the brand master and every app icon are rendered"
-sha256 = "ede97fbc1a6d677ac372e8ae30069c5da073dd11bee77dab9ec49dbe574f374d"
+usage = "Owner original file for the new app mark, from which the brand master and every app icon are rendered"
+sha256 = "2e6cec716b829d25506d8b0571d35f6e2c03b2e1e5067646d77aa8c746e0196b"
 
 [[asset]]
 path = "assets/app-icon/pdfcraft.svg"
@@ -2824,7 +2824,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Master artwork; every other app-icon file is rendered from it (packaging/icons.sh)"
-sha256 = "f6f5a50c7a04e45cad8ffaccad8465fbdacbc580e71e18db06478003e5f8af97"
+sha256 = "cf7e3277f8aa4102278a0eee865034f5553fd528c6aa1bf18e204c4f784904b2"
 
 [[asset]]
 path = "assets/app-icon/pdfcraft-small.svg"
@@ -2835,7 +2835,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "README header and assets/app-icon/README.md"
-sha256 = "f6f5a50c7a04e45cad8ffaccad8465fbdacbc580e71e18db06478003e5f8af97"
+sha256 = "cf7e3277f8aa4102278a0eee865034f5553fd528c6aa1bf18e204c4f784904b2"
 
 [[asset]]
 path = "assets/app-icon/pdfcraft-1024.png"
@@ -2846,7 +2846,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Runtime window/Dock icon on macOS (apps/pdfcraft/src/main.rs)"
-sha256 = "ca56105db749cc0ede7d13bff2fc9e900a60a247247947f272e350df2dbf59e0"
+sha256 = "04b6c8c4b2a120bab98921c5befe8b69abfb2f2ec5b629d97c31c17a432a1707"
 
 [[asset]]
 path = "assets/app-icon/pdfcraft.icns"
@@ -2857,7 +2857,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "macOS app bundle icon"
-sha256 = "412fe0ec298e2792298ac178f172953598103e41b476a2d139d347b1862c1201"
+sha256 = "ebb58ae7703fb8209144dd560e0fb19f3c43e874e2b7d86bb3238d881704fe78"
 
 [[asset]]
 path = "assets/app-icon/pdfcraft.ico"
@@ -2868,7 +2868,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Embedded in pdfcraft.exe by apps/pdfcraft/build.rs (Explorer, taskbar, Start menu, Alt-Tab)"
-sha256 = "27c0a2cd6c7b2f8453450f51c17586a18f43268fd77905e00f24a3a8b212a4ed"
+sha256 = "bdc667a7de9927ecbed9fec3b4c54c93d11728488450ec6e85d12199128803c3"
 
 [[asset]]
 path = "assets/app-icon/pdfcraft-document.svg"
@@ -2901,7 +2901,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Linux hicolor theme icon (packaging/linux/ai.storyteller.pdfcraft.desktop)"
-sha256 = "ffe33621c60abf9ab601de14adbf4cda402eecafe103112ea5589cf433ad6d69"
+sha256 = "c5665f5e6c26943b474a9dee06c6f9bbdcb2792e85e72bfc2c1af615d64f667a"
 
 [[asset]]
 path = "assets/app-icon/hicolor/24x24/apps/ai.storyteller.pdfcraft.png"
@@ -2912,7 +2912,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Linux hicolor theme icon (packaging/linux/ai.storyteller.pdfcraft.desktop)"
-sha256 = "189cdb67cb23e7f60d76c0466b65f0698877695d69cf0b47835df840315058cc"
+sha256 = "e18014a68f1b34e956ab0caf48f3631d4db5637a814782cb537545c6297790fe"
 
 [[asset]]
 path = "assets/app-icon/hicolor/32x32/apps/ai.storyteller.pdfcraft.png"
@@ -2923,7 +2923,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Linux hicolor theme icon (packaging/linux/ai.storyteller.pdfcraft.desktop)"
-sha256 = "e009f52fe4579a48ac6365205a0280e94cec6d1a1c4b1d875c44e40fc8393045"
+sha256 = "494ee997167c21d9549745f9da4cfb8c4702ac16c68a84fbb5f1f97f663e4efe"
 
 [[asset]]
 path = "assets/app-icon/hicolor/48x48/apps/ai.storyteller.pdfcraft.png"
@@ -2934,7 +2934,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Linux hicolor theme icon (packaging/linux/ai.storyteller.pdfcraft.desktop)"
-sha256 = "174eb524aaa22fb9a220a53eab76ea345b13077dc6146309ff710ac7050efd39"
+sha256 = "9c785afae4563aedf1a2dceb61ebecd0dfb9213aedbc7af68466e1477fd5b375"
 
 [[asset]]
 path = "assets/app-icon/hicolor/64x64/apps/ai.storyteller.pdfcraft.png"
@@ -2945,7 +2945,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Linux hicolor theme icon (packaging/linux/ai.storyteller.pdfcraft.desktop)"
-sha256 = "75f5eb91d3d2b515296f074a9ff87832948a58d8b38447730f6e5c27dc6e81b3"
+sha256 = "8ab81e6b222d3b262a4c21695de4f8495f24f1e75d3b1da9c1064e1e223cfc5c"
 
 [[asset]]
 path = "assets/app-icon/hicolor/128x128/apps/ai.storyteller.pdfcraft.png"
@@ -2956,7 +2956,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Linux hicolor theme icon (packaging/linux/ai.storyteller.pdfcraft.desktop)"
-sha256 = "7a1d0ba5f8f906cb0a16bb8d191ff2b86899627e3bb8d22e9799d7e200b68a24"
+sha256 = "09e6b3cb9f541c3b83207239ba279bdbc59c59a7bd2a85dedee6ea5a11eca63f"
 
 [[asset]]
 path = "assets/app-icon/hicolor/256x256/apps/ai.storyteller.pdfcraft.png"
@@ -2967,7 +2967,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Linux hicolor theme icon (packaging/linux/ai.storyteller.pdfcraft.desktop); runtime window icon on Windows and Linux (apps/pdfcraft/src/main.rs)"
-sha256 = "d06952ae9931a7fcf0cbae43cacc5756d40d0c845193a71364583b9d9c5f51e2"
+sha256 = "630c0ba9f53ef9ee31b1f72c9a08b5931969ffc512dde0fce50184182796e0e0"
 
 [[asset]]
 path = "assets/app-icon/hicolor/512x512/apps/ai.storyteller.pdfcraft.png"
@@ -2978,7 +2978,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Linux hicolor theme icon (packaging/linux/ai.storyteller.pdfcraft.desktop)"
-sha256 = "26c9698375d40d462e270472e00dc8eaa94db1b2cc2416a7dc5380fa642234e0"
+sha256 = "efe27b726a775416750ec34d90d5b9d1c1c27cb059947a701b6f3f25d239b8f0"
 
 [[asset]]
 path = "assets/app-icon/hicolor/scalable/apps/ai.storyteller.pdfcraft.svg"
@@ -2989,7 +2989,7 @@ licence = "MIT OR Apache-2.0"
 licence_file = "assets/app-icon/LICENSE.txt"
 kind = "icon"
 usage = "Linux hicolor theme icon (packaging/linux/ai.storyteller.pdfcraft.desktop)"
-sha256 = "f6f5a50c7a04e45cad8ffaccad8465fbdacbc580e71e18db06478003e5f8af97"
+sha256 = "cf7e3277f8aa4102278a0eee865034f5553fd528c6aa1bf18e204c4f784904b2"
 
 [[asset]]
 path = "docs/images/pdfcraft-bookmarks.png"
