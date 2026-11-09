@@ -603,7 +603,7 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
     cancel
 }
 
-/// The project mark (assets/brand/mk-pdf-logo.svg, a blue disc that reads on light and dark),
+/// The project mark (assets/brand/mk-pdf-logo.svg, a red PDF tile that reads on light and dark),
 /// `size` points tall and a touch wider than that.
 pub fn brand_mark(ui: &mut egui::Ui, size: f32) -> Response {
     ui.add(

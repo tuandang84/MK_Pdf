@@ -1,25 +1,23 @@
 # MK PDF app icon
 
-<img src="pdfcraft-small.svg" alt="MK PDF app icon: the MK monogram and the word PDF in white on a blue disc" width="128">
+<img src="pdfcraft-small.svg" alt="MK PDF app icon: cream PDF letters on a red tile" width="128">
 
-**Mark:** a blue disc carrying Minh Kim Tech's **MK** monogram, the word **PDF** and the company name
-**MINH KIM TECH** in white. The full logo, with its placement and sizes, is in
-[`assets/brand/`](../brand/).
+**Mark:** a red rounded tile carrying raised cream letters **PDF** (a tall P above the D and the F).
+The full logo, with its placement and sizes, is in [`assets/brand/`](../brand/).
 
-**Palette:** one colour.
+**Palette:**
 
 | Colour | Hex | Used for |
 |---|---|---|
-| Brand blue | `#114C76` | the disc |
-| White | `#ffffff` | the monogram, `PDF` and the company line |
+| Tile red | `#e82626`–`#d92828` (gradient) | the tile |
+| Cream | `#f6eedc` | the raised `PDF` letters |
 
-**Tile:** the disc is transparent outside its edge, drawn as wide as the canvas allows, so Windows and
-Linux icons read as a full-bleed roundel. macOS icons put it on Apple's grid (an 824 px body centred
-on a transparent 1024 px canvas).
+**Tile:** the tile spans the canvas edge to edge, so Windows and Linux icons read as a
+full-bleed square. macOS icons put it on Apple's grid (an 824 px body centred on a transparent
+1024 px canvas).
 
-**Provenance:** the project owner's original logo (`assets/brand/mk-pdf-logo.png`). The word `PDF` is
-set in Inter (OFL-1.1, `assets/fonts/Inter-SemiBold.ttf`); everything else is their own drawing.
-Licence: [LICENSE.txt](LICENSE.txt) (`MIT OR Apache-2.0`, like the repo).
+**Provenance:** the project owner's new logo (`assets/brand/mk-pdf-logo.png`, recreated as
+`new-logo.png`). Licence: [LICENSE.txt](LICENSE.txt) (`MIT OR Apache-2.0`, like the repo).
 
 ## Files
 

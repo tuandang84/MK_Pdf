@@ -4,7 +4,7 @@
 
 
 <p align="center">
-  <img src="assets/app-icon/hicolor/256x256/apps/ai.storyteller.pdfcraft.png" width="128" height="128" alt="MK PDF icon: the MK monogram and the word PDF in white on a blue disc">
+  <img src="assets/app-icon/hicolor/256x256/apps/ai.storyteller.pdfcraft.png" width="128" height="128" alt="MK PDF icon: cream PDF letters on a red tile">
 </p>
 
 <h1 align="center">MK PDF</h1>
